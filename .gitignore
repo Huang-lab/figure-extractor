@@ -1,0 +1,42 @@
+target/
+
+docker-compose.override.yml
+
+# Python
+# Ignore Python bytecode and environment files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+venv/
+env/
+ENV/
+.env
+*.log
+
+# Scala
+# Ignore Scala build files and target directory
+target/
+*.class
+*.jar
+*.war
+*.log
+*.sbt
+*.idea/
+
+# Environment
+# Ignore environment-specific files
+.env
+*.local
+
+# General
+# Ignore backup files and IDE configuration files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.temp
+*.DS_Store
+*.vscode/
+.idea/
