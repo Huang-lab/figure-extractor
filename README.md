@@ -52,6 +52,12 @@ This API service is built on top of PDFFigures 2.0, a Scala-based project by the
 
 ### Extract Figures and Tables from a PDF
 
+"""
+Processes a document and performs various operations on each page.
+
+Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page document with a total processing time of ~45 seconds).
+"""
+
 #### Using the CLI
 
 1. Run the `cli.py` script with the path to the PDF file:

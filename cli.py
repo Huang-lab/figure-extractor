@@ -111,28 +111,29 @@ def extract_batch(folder_path, output_dir, url):
             response.raise_for_status()
             # Let's download the documents
             if response.status_code == 200:
-                response_data = response.json()
-                metadata_filename = response_data['metadata_file']
-                metadata_download_url = f"http://localhost:5001/download/{metadata_filename}"
-                metadata_output_path = os.path.join(output_dir, metadata_filename)
+                # response_data = response.json()
+                # metadata_filename = response_data['metadata_file']
+                # metadata_download_url = f"http://localhost:5001/download/{metadata_filename}"
+                # metadata_output_path = os.path.join(output_dir, metadata_filename)
                 stat_file_path = os.path.join(output_dir, 'stat_file.json')
-                # check the stat file and print the number of figures and tables
-                if os.path.exists(stat_file_path):
-                    with open(stat_file_path, 'r') as stat_file:
-                        stats = json.load(stat_file)
-                        for doc, stat in stats.items():
-                            num_figures = stat.get('figures', 0)
-                            num_tables = stat.get('tables', 0)
-                            print(f"Document: {doc}, Figures: {num_figures}, Tables: {num_tables}")
+                # # check the stat file and print the number of figures and tables
+                # if os.path.exists(stat_file_path):
+                #     with open(stat_file_path, 'r') as stat_file:
+                #         stats = json.load(stat_file)
+                #         for doc, stat in stats.items():
+                #             num_figures = stat.get('figures', 0)
+                #             num_tables = stat.get('tables', 0)
+                #             print(f"Document: {doc}, Figures: {num_figures}, Tables: {num_tables}")
+                logging.debug(f"Batch extraction completed. Statistics saved to {stat_file_path}")
                 
                 # Download the figures
-                download_file(metadata_download_url, metadata_output_path)
+                #download_file(metadata_download_url, metadata_output_path)
 
-                figures = response_data.get('figures', [])
-                for figure_url in figures:
-                    figure_filename = os.path.basename(figure_url)
-                    figure_download_url = f"http://localhost:5001/download/{figure_filename}"
-                    download_file(figure_download_url, os.path.join(output_dir, figure_filename))
+                # figures = response_data.get('figures', [])
+                # for figure_url in figures:
+                #     figure_filename = os.path.basename(figure_url)
+                #     figure_download_url = f"http://localhost:5001/download/{figure_filename}"
+                #     download_file(figure_download_url, os.path.join(output_dir, figure_filename))
             else:
                 logging.error(f"Error: {response.status_code}")
                 logging.error(response.text)
