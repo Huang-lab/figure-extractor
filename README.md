@@ -70,6 +70,14 @@ This API service is built on top of PDFFigures 2.0, a Scala-based project by the
 
     This will extract figures and tables from [protocol.pdf](http://_vscodecontentref_/10) and save the metadata and figures to the current directory.
 
+3. To process all PDF files in a directory, use the `--batch` argument:
+
+    ```sh
+    python cli.py --batch ./pdf_directory --url http://localhost:5001/extract --output-dir ./output
+    ```
+
+    This will extract figures and tables from all PDF files in `./pdf_directory` and save the metadata and figures to the `./output` directory.
+
 #### Using the Module in Python Code
 
 1. Import the `extract_figures` function from the `figure_extractor` module:
