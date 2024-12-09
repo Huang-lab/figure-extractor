@@ -6,6 +6,9 @@ import os, logging
 import tempfile
 import zipfile, shutil
 
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+ALLOWED_EXTENSIONS = {'pdf'}
+
 @app.route('/extract', methods=['POST'])
 def extract_figures():
     if 'file' not in request.files:
@@ -73,6 +76,9 @@ def extract_batch():
             logging.debug(f"Processing directory: {input_dir}")
 
             result = run_pdffigures2_batch(input_dir, output_dir)
+
+
+
             if result.returncode != 0:
                 logging.error(f"Error executing command: {result.stderr}")
                 return jsonify({"error": result.stderr}), 500
@@ -97,4 +103,16 @@ def download_file(filename):
     """
     directory = app.config['OUTPUT_FOLDER']
     return send_from_directory(directory, filename)
+
+@app.route('/images', methods=['GET'])
+def list_images():
+    """
+    List all images in the output directory.
+    """
+    output_dir = app.config['OUTPUT_FOLDER']
+    if not os.path.exists(output_dir):
+        return jsonify({"error": "Output directory does not exist"}), 500
+
+    images = [f for f in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+    return jsonify({"images": images}), 200
 

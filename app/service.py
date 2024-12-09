@@ -14,8 +14,6 @@ def run_pdffigures2(file_path, output_dir):
     result = subprocess.run(base_command, capture_output=True, text=True)
     return result
 
-# app/service.py
-
 def run_pdffigures2_batch(folder_path, output_dir):
     """
     Run pdffigures2 batch processing on a directory of PDFs

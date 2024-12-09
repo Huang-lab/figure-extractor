@@ -18,6 +18,7 @@ def read_output_file(output_file):
 
 
 import logging
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
