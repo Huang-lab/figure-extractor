@@ -2,6 +2,65 @@ import subprocess
 import os
 import logging
 import time
+import json
+from .utils import read_output_file
+
+def parse_stat_file(output_dir):
+    stat_file_path = os.path.join(output_dir, 'stat_file.json')
+    if os.path.exists(stat_file_path):
+        with open(stat_file_path, 'r') as stat_file:
+            stats = json.load(stat_file)
+            logging.debug(f"Stats: {stats}")
+            result = []
+            for stat in stats:  # Iterate over the list of dictionaries
+                logging.debug(f"Stat: {stat}")
+                metadata_filename = os.path.splitext(os.path.basename(stat.get('filename', '')))[0] + '.json'
+                logging.debug(f"Metadata filename: {metadata_filename}")
+                metadata_path = os.path.join(output_dir, metadata_filename)
+                logging.debug(f"Metadata path: {metadata_path}")
+                if os.path.exists(metadata_path):
+                    logging.debug(f"Metadata file exists: {metadata_path}")
+                    metadata = read_output_file(metadata_path)
+                    if isinstance(metadata, list):  
+                        # Extract render URLs for Figures
+                        figure_urls = [
+                            fig.get('renderURL') 
+                            for fig in metadata 
+                            if fig.get('figType') == 'Figure'
+                        ]
+                        
+                        # Extract render URLs for Tables
+                        table_urls = [
+                            fig.get('renderURL') 
+                            for fig in metadata 
+                            if fig.get('figType') == 'Table'
+                        ]
+
+                        # Debug log extracted URLs
+                        logging.debug(f"Figure URLs: {figure_urls}")
+                        logging.debug(f"Table URLs: {table_urls}")
+                    else:
+                        logging.error(f"Unexpected metadata structure: {type(metadata)}")
+                        figure_urls = []
+                        table_urls = []
+
+
+                num_figures = stat.get('numFigures', 0)
+                num_tables = stat.get('numPages', 0)  
+                logging.debug(f"Figures: {num_figures}, Tables: {num_tables}")  
+                logging.debug(f"Metadata: {metadata_filename}, Figures: {figure_urls}, Tables: {table_urls}")
+                logging.debug(f"Time in millis: {stat.get('timeInMillis', 0)}")
+                result.append({
+                    "document": os.path.splitext(os.path.basename(stat.get('filename', '')))[0],
+                    "n_figures": len(figure_urls),
+                    "n_tables": len(table_urls),
+                    "pages": stat.get('numPages', 0),
+                    "time_in_millis": stat.get('timeInMillis', 0),
+                    "metadata_filename": os.path.splitext(os.path.basename(stat.get('filename', '')))[0] + '.json',
+                    "figures": figure_urls,
+                    "tables": table_urls
+                })
+            return result
 
 def run_pdffigures2(file_path, output_dir):
     base_command = [
@@ -61,6 +120,9 @@ def run_pdffigures2_batch(folder_path, output_dir):
             logging.error(f"STDERR: {result.stderr}")
         
         logging.debug(f"Command output: {result}, {result.stdout}")
+
+        # return values from stats file
+        result = parse_stat_file(abs_output)
         return result
         
     except Exception as e:
