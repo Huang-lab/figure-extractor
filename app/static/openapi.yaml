@@ -1,0 +1,175 @@
+openapi: 3.0.0
+info:
+  title: Figure Extractor API
+  description: |
+    Extract figures and tables from PDF documents.
+    Supports both single PDF processing and batch processing of directories.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5001
+    description: Development server
+
+paths:
+  /extract:
+    post:
+      summary: Extract figures from a single PDF
+      description: Upload a single PDF file to extract figures and tables
+      tags:
+        - extraction
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to process (e.g. 2404.18021v1.pdf)
+      parameters:
+        - in: query
+          name: output_dir
+          schema:
+            type: string
+            example: ./output
+          description: Directory to save extracted files. Defaults to `./output`.
+          required: false
+      responses:
+        '200':
+          description: Successful extraction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num_tables:
+                    type: integer
+                    description: Number of tables extracted
+                  num_figures:
+                    type: integer
+                    description: Number of figures extracted
+                  metadata_file:
+                    type: string
+                    description: Name of generated metadata JSON file
+                  figures:
+                    type: array
+                    items:
+                      type: string
+                    description: URLs of extracted figure images
+                  tables:
+                    type: array
+                    items:
+                      type: string
+                    description: URLs of extracted table images
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+
+  /extract_batch:
+    post:
+      summary: Extract figures from multiple PDFs
+      description: Upload a directory of PDF files to extract figures and tables
+      tags:
+        - extraction
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                folder:
+                  type: string
+                  format: binary
+                  description: Directory containing PDF files to process
+      parameters:
+        - in: query
+          name: output_dir
+          schema:
+            type: string
+            example: ./output
+          description: Directory to save extracted files. Defaults to `./output`.
+          required: false
+      responses:
+        '200':
+          description: Successful extraction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num_documents:
+                    type: integer
+                    description: Number of documents processed
+                  documents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filename:
+                          type: string
+                          description: Name of the processed file
+                        metadata_file:
+                          type: string
+                          description: Name of the metadata JSON file
+                        figures:
+                          type: integer
+                          description: Number of figures extracted
+                        pages:
+                          type: integer
+                          description: Number of pages in the document
+                        time_ms:
+                          type: integer
+                          description: Time taken to process the document in milliseconds
+                  processing_stats:
+                    type: object
+                    properties:
+                      total_pages:
+                        type: integer
+                        description: Total number of pages processed
+                      total_time_ms:
+                        type: integer
+                        description: Total processing time in milliseconds
+                      avg_ms_per_page:
+                        type: number
+                        format: float
+                        description: Average processing time per page in milliseconds
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message

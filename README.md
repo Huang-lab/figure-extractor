@@ -27,8 +27,6 @@ This API service is built on top of PDFFigures 2.0, a Scala-based project by the
 
 ## Use Cases
 
-### Use Cases
-
 1. *Machine Learning Dataset Creation*
 Extract visual data from clinical trial reports and research papers to build training datasets for medical image analysis and AI models, enabling researchers to efficiently aggregate figures for training machine learning algorithms in healthcare diagnostics.
 
@@ -60,6 +58,10 @@ Quickly compile comprehensive visual libraries from academic publications, allow
     ```sh
     docker run -p 5001:5001 pdf-extraction
     ```
+
+    ### API Documentation
+
+    For detailed API documentation, visit [Swagger API Docs](http://127.0.0.1:5001/api/docs/) 
 
 ## Usage: `howto.ipynb`
 
