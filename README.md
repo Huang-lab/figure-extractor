@@ -82,30 +82,33 @@ For example code snippets, please refer to the [`how-to.ipynb`](how-to.ipynb) no
 
 **Default behavior**
 
-    ```sh
-    python figure_extractor.py 2404.18021v1.pdf
-    ```
+```sh
+python figure_extractor.py 2404.18021v1.pdf
+```
 This saves the extracted figures to `./output`
 
 **Specifying output directory:**
 
-    ```sh
-    python figure_extractor.py path/to/pdf/file --output_dir ./figures
-    ```
+```sh
+python figure_extractor.py path/to/pdf/file --output_dir ./figures
+```
 
 This saves the extracted figures to `./figures`, creating the directory if it does not exist.
 
 **Processing a folder:**
 
-    ```sh
-    python figure_extractor.py /path/to/pdf/folder --output-dir ./custom_output
-    ```
+```sh
+python figure_extractor.py /path/to/pdf/folder --output-dir ./custom_output
+```
 **Specifying a custom URL if you run the docker service on another port:**
 
-    ```sh
+```sh
     python figure_extractor.py path/to/pdf/file --url http://localhost:5001/extract --output-dir ./output
+```
+
+```sh
     python figure_extractor.py /path/to/pdf/folder --url http://localhost:5001/extract_batch --output-dir ./output
-    ```sh
+```
 
 
 
