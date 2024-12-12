@@ -61,7 +61,7 @@ Quickly compile comprehensive visual libraries from academic publications, allow
 
     ### API Documentation
 
-    For detailed API documentation, visit [Swagger API Docs](http://127.0.0.1:5001/api/docs/) 
+    For detailed API documentation, visit [API Docs](https://app.swaggerhub.com/apis-docs/WZEHRAKORKUSUZ/figure-extractor_api/1.0.0) 
 
 ## Usage: `howto.ipynb`
 
