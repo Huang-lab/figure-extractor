@@ -25,6 +25,19 @@ This API service is built on top of PDFFigures 2.0, a Scala-based project by the
 - Docker support for easy deployment
 - Visualization options for PDF parsing
 
+## Use Cases
+
+### Use Cases
+
+1. *Machine Learning Dataset Creation*
+Extract visual data from clinical trial reports and research papers to build training datasets for medical image analysis and AI models, enabling researchers to efficiently aggregate figures for training machine learning algorithms in healthcare diagnostics.
+
+2. *Clinical Research Data Mining*
+Automatically extract and catalog figures from medical research articles, capturing key visualizations like treatment effect graphs, patient outcome charts, and experimental result diagrams to support systematic reviews and meta-analysis.
+
+3. *Academic Literature Review and Education*
+Quickly compile comprehensive visual libraries from academic publications, allowing researchers and educators to create teaching resources, compare research methodologies, and track visual trends across scientific disciplines.
+
 ## Setup
 
 ### Step 1: Build and Run the Docker Container
@@ -48,22 +61,28 @@ This API service is built on top of PDFFigures 2.0, a Scala-based project by the
     docker run -p 5001:5001 pdf-extraction
     ```
 
-## Usage
+## Usage: `howto.ipynb`
 
 ### Extract Figures and Tables from a PDF
 
 """
 Processes a document and performs various operations on each page.
 
-Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page document with a total processing time of ~45 seconds).
+Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page document with a total processing time of ~45 seconds)
 """
+
+#### Using the Module in Python Code
+
+```markdown
+For an example code snippets, please refer to the `Figure_Extraction_Example.ipynb` notebook.
+```
 
 #### Using the CLI
 
-1. Run the `cli.py` script with the path to the PDF file:
+1. Run the `figure_extractor.py` script with the path to the PDF file:
 
     ```sh
-    python cli.py 2404.18021v1.pdf --url http://localhost:5001/extract --output-dir ./output
+    python figure_extractor.py 2404.18021v1.pdf --url http://localhost:5001/extract --output-dir ./output
     ```
 
     This will extract figures and tables from [2404.18021v1.pdf](http://_vscodecontentref_/9) and save the metadata and figures to the `./output` directory.
@@ -71,7 +90,7 @@ Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page docum
 2. If you don't specify the `--url` and `--output-dir` arguments, the script will use default values:
 
     ```sh
-    python cli.py 2404.18021v1.pdf
+    python figure_extractor.py 2404.18021v1.pdf
     ```
 
     This will extract figures and tables from [protocol.pdf](http://_vscodecontentref_/10) and save the metadata and figures to the current directory.
@@ -79,40 +98,26 @@ Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page docum
 3. To process all PDF files in a directory, use the `--batch` argument:
 
     ```sh
-    python cli.py --batch ./pdf_directory --url http://localhost:5001/extract --output-dir ./output
+    python figure_extractor.py --batch ./pdf_directory --url http://localhost:5001/extract --output-dir ./output
     ```
 
     This will extract figures and tables from all PDF files in `./pdf_directory` and save the metadata and figures to the `./output` directory.
 
-#### Using the Module in Python Code
-
-1. Import the `extract_figures` function from the `figure_extractor` module:
-
-    ```python
-    from figure_extractor import extract_figures
-
-    extract_figures('2404.18021v1.pdf', output_dir='./output', url='http://localhost:5001/extract')
-    ```
-
-    This will extract figures and tables from [protocol.pdf]() and save the metadata and figures to the `./output` directory. If the given directory doesn't exist, creates one. 
-
-    See `example.py`
 
 
-
-
-## Project Structure
+## App Structure
 ```
 project/
 ├── Dockerfile                # Defines the Docker image for the Flask web service
+├── Dockerignore    
 ├── app/                      # Contains the Flask web service code
 │   ├── __init__.py           # Initializes the Flask app
 │   ├── routes.py             # Defines the API endpoints
 │   ├── service.py            # Contains the logic for running `pdffigures2`
 │   └── utils.py              # Utility functions for file handling
-├── figure_extractor.py       # Module for extracting figures and tables from a PDF file
-├── cli.py                    # Command-line interface for extracting figures and tables from a PDF file
-└── README.md                 # This file
+├── figure_extractor.py       # CLI & Module for extracting figures and tables from a PDF file
+├── how-to.ipynb 
+└── README.md                 
 ```
 
 ## License

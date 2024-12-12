@@ -39,6 +39,7 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt
 # Set environment variables for Java
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
+ENV JAVA_OPTS="-Xmx12g"
 
 # Set environment variable for the output directory (allow overrides from Docker or ENV)
 ENV OUTPUT_DIR=/app/output

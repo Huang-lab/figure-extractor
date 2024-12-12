@@ -5,6 +5,7 @@ import time
 import json
 from .utils import read_output_file
 
+
 def parse_stat_file(output_dir):
     stat_file_path = os.path.join(output_dir, 'stat_file.json')
     if os.path.exists(stat_file_path):
@@ -63,8 +64,9 @@ def parse_stat_file(output_dir):
             return result
 
 def run_pdffigures2(file_path, output_dir):
+    java_opts = os.getenv('JAVA_OPTS', '-Xmx12g')
     base_command = [
-        'java', '-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider', '-jar', '/pdffigures2/pdffigures2.jar',
+        'java', java_opts, '-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider', '-jar', '/pdffigures2/pdffigures2.jar',
         file_path,
         "-m", output_dir,
         "-d", output_dir,
@@ -83,10 +85,12 @@ def run_pdffigures2_batch(folder_path, output_dir):
     abs_output = os.path.abspath(output_dir)
     abs_output = abs_output if abs_output.endswith('/') else abs_output + '/'
     stat_file = os.path.join(abs_output, 'stat_file.json')
+
+    java_opts = os.getenv('JAVA_OPTS', '-Xmx12g')
     
     # Build command with separate arguments
     base_command = [
-        'java', '-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider', '-jar', '/pdffigures2/pdffigures2.jar',
+        'java', java_opts, '-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider', '-jar', '/pdffigures2/pdffigures2.jar',
         input_dir,
         '-s', stat_file,
         '-m', abs_output,
@@ -118,6 +122,7 @@ def run_pdffigures2_batch(folder_path, output_dir):
             logging.error(f"Command failed with exit code {result.returncode}")
             logging.error(f"STDOUT: {result.stdout}")
             logging.error(f"STDERR: {result.stderr}")
+            return {"error": result.stderr}, 500
         
         logging.debug(f"Command output: {result}, {result.stdout}")
 

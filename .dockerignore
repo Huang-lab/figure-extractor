@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+!.git/
+!.vscode/
+!*.py
+!*.ipynb
+!.conda/
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+tmp/
+*.tmp
+
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore Dockerfile and .dockerignore itself
+Dockerfile
+.dockerignore
+
+# Ignore version control directories
+.git
+.gitignore
