@@ -1,0 +1,161 @@
+[{
+  "caption": "Table 1: List of meta-mode tasks (4 major meta-task and 22 specific tasks)",
+  "captionBoundary": {
+    "x1": 126.0,
+    "x2": 485.99920654296875,
+    "y1": 176.24644470214844,
+    "y2": 181.70098876953125
+  },
+  "figType": "Table",
+  "imageText": ["Prime", "editing", "system", "selection", "[16]", "Delivery", "method", "selection", "pegRNA", "design", "for", "prime", "editing[8,", "27,", "12,", "36]", "off-target", "evaluation", "[11]", "experimental", "protocol", "recommendation", "[21]", "validation", "protocol", "recommendation", "and", "primer", "design", "for", "sequencing", "[48,", "21]", "Small", "fragment", "insertion,", "replacement,", "and", "deletion", "CRISPR", "Prime", "Editing", "Base", "editing", "system", "selection", "[26]", "Delivery", "method", "selection", "sgRNA", "design", "for", "base", "editing", "[22]", "off-target", "evaluation", "[11]", "experimental", "protocol", "recommendation", "[21]", "validation", "protocol", "recommendation", "and", "primer", "design", "for", "sequencing", "[48,", "21]", "Single", "base", "replacement", "from", "CG", "to", "AT", "or", "AT", "to", "CG", "and", "broad", "mutagenesis", "CRISPR", "Base", "Editing", "CRISPR/Cas", "Activation/Interference", "system", "selection", "[18]", "Delivery", "method", "selection", "sgRNA", "design", "for", "activation/interference", "[28,", "14,", "15,", "43]", "off-target", "evaluation", "[11]", "experimental", "protocol", "recommendation", "[21]", "validation", "protocol", "recommendation", "and", "primer", "design", "for", "qPCR", "[48,", "21]", "Gene", "activation", "and", "repression", "CRISPR", "activation", "/interference", "CRISPR/Cas", "system", "selection", "[41]", "Delivery", "method", "selection", "sgRNA", "design", "for", "knockout", "[28,", "14,", "15,", "43]", "off-target", "evaluation", "[11]", "experimental", "protocol", "recommendation", "[21]", "validation", "protocol", "recommendation", "and", "primer", "design", "for", "sequencing", "[48,", "21]", "Single/multiple", "genes", "knockout,", "deletion", "of", "gene", "fragments", "CRISPR", "Knockout", "Meta-Tasks", "Gene", "editing", "scenarios", "Individual", "Design", "Tasks"],
+  "name": "1",
+  "page": 10,
+  "regionBoundary": {
+    "x1": 71.75999999999999,
+    "x2": 564.0,
+    "y1": 184.79999999999998,
+    "y2": 629.04
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Table1-1.png"
+}, {
+  "caption": "Figure 1: Overview of CRISPR-GPT Agent. The CRISPR-GPT is built upon an LLMpowered design and planning engine (left), which helps to complete 4 core meta-tasks (top right), as well as other auxiliary functions (freestyle Q&A, off-target prediction). CRISPR-GPT has integrated a set of useful skills and toolkits (bottom right) that the LLM agent would call when needed to facilitate human users across the different tasks and subtasks. Figure created with BioRender.com.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.0046997070312,
+    "y1": 318.98443603515625,
+    "y2": 395.5719909667969
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "1",
+  "page": 1,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 70.8,
+    "y2": 301.2
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure1-1.png"
+}, {
+  "caption": "Figure 3: Task decomposition process and state machine implementation algorithm. (Left) Task decomposition; The LLMs can automatically perform task decomposition based on the user’s request, the descriptions of the current supported tasks and the dependencies, and the internal knowledge inside the LLMs. The state machines of the selected tasks are chained together to fulfill the user’s request. (Right) State machines & LLM Agent; State machines are the core of the Task Executor, where each state is responsible for one round of interaction with the user. The instruction is provided to the user first with sufficient information for the current decisionmaking step and the required inputs. After receiving the response from the user, it provides output and feedback, where APIs (e.g. program execution/web search/database retrieval) are potentially called during the execution of the state. Afterward, the state machine transits to the next state. LLM Agent generates responses to every step of the state machine on behalf of the user. The user monitors the whole process and provides corrections if the generated content is wrong or overrides the LLM Agent and manually interacts with the Task Executor.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.0059204101562,
+    "y1": 329.471435546875,
+    "y2": 505.6469421386719
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "3",
+  "page": 6,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 72.0,
+    "y2": 311.03999999999996
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure3-1.png"
+}, {
+  "caption": "Figure 7: Wet-lab demonstration of human-AI collaboration in performing a gene-knockout experiment. (Left) Schematic showing the workflow of human-AI interaction. (Top right) Sample sgRNAs designed through CRISPR-GPT. (Bottom right) Editing outcome from next generation sequencing.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.0026245117188,
+    "y1": 498.9854431152344,
+    "y2": 547.1199951171875
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "7",
+  "page": 13,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 238.79999999999998,
+    "y2": 481.2
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure7-1.png"
+}, {
+  "caption": "Figure 6: Evaluation results showing comparative performance of CRISPR-GPT and ChatGPT 3.5/4.0 in a range of gene-editing experiment design tasks across three different modes: MetaMode, AutoMode and QAMode. All tasks are scored in four different aspects: accuracy, reasoning, completeness, and conciseness. A score of 1 represents poor performance and 5 represents excellent performance. Detailed rubrics are listed in Appendix C.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.0014038085938,
+    "y1": 255.9994354248047,
+    "y2": 318.3609619140625
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "6",
+  "page": 12,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 70.8,
+    "y2": 238.07999999999998
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure6-1.png"
+}, {
+  "caption": "Figure 5: Example workflows outlining the general tasks involved in gene-editing experimental designs as facilitated by CRISPR-GPT.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 539.995849609375,
+    "y1": 381.0904541015625,
+    "y2": 400.7710266113281
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "5",
+  "page": 11,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 70.8,
+    "y2": 363.12
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure5-1.png"
+}, {
+  "caption": "Figure 4: Overview of CRISPR-GPT’s interactive modules for gene-editing experimental design. (A) schematics illustrating the functionalities of the three modules within CRISPR-GPT, accompanied by examples of their applications. (B) Web-interface of CRISPR-GPT, note No.1-4 is the “Meta Mode”, No.5 is the “Auto Mode”, No.6 is Off-target-prediction function and “Q: prompt would trigger the Q&A mode”.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.0057373046875,
+    "y1": 607.1974487304688,
+    "y2": 669.5590209960938
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "4",
+  "page": 8,
+  "regionBoundary": {
+    "x1": 164.88,
+    "x2": 447.12,
+    "y1": 261.84,
+    "y2": 589.1999999999999
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure4-1.png"
+}, {
+  "caption": "Figure 2: Components of CRISPR-GPT enable human-AI collaboration to automate gene-editing experimental designs across complex tasks. LLM Planner is responsible for configuring tasks based on the user’s needs (4 predefined meta-tasks or LLM planned chain of tasks). Tool Provider connects the system to external APIs, tools, libraries, and documents. Task Executor is implemented as a state machine, responsible for providing instructions and feedback, receiving input from LLM Agent, and calling APIs via Tool Provider. LLM Agent is responsible for interacting with the task executor on behalf of the user, where the user can monitor the process and provide correction to the LLM agent if the generated content.",
+  "captionBoundary": {
+    "x1": 72.0,
+    "x2": 540.004638671875,
+    "y1": 331.3504333496094,
+    "y2": 436.3919677734375
+  },
+  "figType": "Figure",
+  "imageText": [],
+  "name": "2",
+  "page": 4,
+  "regionBoundary": {
+    "x1": 94.8,
+    "x2": 517.1999999999999,
+    "y1": 70.8,
+    "y2": 313.2
+  },
+  "renderDpi": 300,
+  "renderURL": "/app/outputs/duplicate-Figure2-1.png"
+}]

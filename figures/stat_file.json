@@ -1,0 +1,42 @@
+[
+  {
+    "document": "duplicate",
+    "figures": [
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure1-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure3-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure7-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure6-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure5-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure4-1.png",
+      "/Users/.../figure-extractor/figures_folder/duplicate-Figure2-1.png"
+    ],
+    "metadata_filename": "duplicate.json",
+    "n_figures": 7,
+    "n_tables": 1,
+    "pages": 29,
+    "tables": [
+      "/Users/.../figure-extractor/figures_folder/duplicate-Table1-1.png"
+    ],
+    "time_in_millis": 27301
+  },
+  {
+    "document": "2404.18021v1",
+    "figures": [
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure1-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure3-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure7-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure6-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure5-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure4-1.png",
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Figure2-1.png"
+    ],
+    "metadata_filename": "2404.18021v1.json",
+    "n_figures": 7,
+    "n_tables": 1,
+    "pages": 29,
+    "tables": [
+      "/Users/.../figure-extractor/figures_folder/2404.18021v1-Table1-1.png"
+    ],
+    "time_in_millis": 22507
+  }
+]
