@@ -48,6 +48,7 @@ class PDFExtractor:
         """
         try:
             logging.debug(f"Uploading {file_path} to {url} for extraction")
+            logging.info(f"Extracting figures and tables from {file_path}")
             with open(file_path, 'rb') as file:
                 files = {'file': file}
                 response = requests.post(url, files=files)
@@ -305,12 +306,14 @@ def extract_figures(input_path, output_dir, url=None):
 def main():
     parser = argparse.ArgumentParser(description="Process PDF files and extract data.")
     parser.add_argument('input_path', help="Path to the input file or directory")
-    parser.add_argument('output_dir', help="Directory to save the output files")
-    parser.add_argument('--url', help="URL for the extraction service", default=None)
+    parser.add_argument('--output_dir', nargs='?', default='output', help="Directory to save the output files (default: 'output')")
+    parser.add_argument('--url', help="URL for the extraction service")
     
     args = parser.parse_args()
 
     try:
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
         response = extract_figures(args.input_path, args.output_dir, args.url)
         print(response)
     except Exception as e:

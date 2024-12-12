@@ -43,7 +43,7 @@ Quickly compile comprehensive visual libraries from academic publications, allow
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/zehrakorkusuz/pdf-extraction-api.git
+    git clone https://github.com/Huang-lab/figure-extractor.git
     cd pdf-extraction
     ```
 
@@ -81,29 +81,33 @@ For an example code snippets, please refer to the `Figure_Extraction_Example.ipy
 
 #### Using the CLI
 
-1. Run the `figure_extractor.py` script with the path to the PDF file:
-
-    ```sh
-    python figure_extractor.py 2404.18021v1.pdf --url http://localhost:5001/extract --output-dir ./output
-    ```
-
-    This will extract figures and tables from [2404.18021v1.pdf](http://_vscodecontentref_/9) and save the metadata and figures to the `./output` directory.
-
-2. If you don't specify the `--url` and `--output-dir` arguments, the script will use default values:
+**Default behavior**
 
     ```sh
     python figure_extractor.py 2404.18021v1.pdf
     ```
+This saves the extracted figures to `./output`
 
-    This will extract figures and tables from [protocol.pdf](http://_vscodecontentref_/10) and save the metadata and figures to the current directory.
-
-3. To process all PDF files in a directory, use the `--batch` argument:
+**Specifying output directory:**
 
     ```sh
-    python figure_extractor.py --batch ./pdf_directory --url http://localhost:5001/extract --output-dir ./output
+    python figure_extractor.py path/to/pdf/file --output_dir ./figures
     ```
 
-    This will extract figures and tables from all PDF files in `./pdf_directory` and save the metadata and figures to the `./output` directory.
+This saves the extracted figures to `./figures`, creating the directory if it does not exist.
+
+**Processing a folder:**
+
+    ```sh
+    python figure_extractor.py /path/to/pdf/folder --output-dir ./custom_output
+    ```
+**Specifying a custom URL if you run the docker service on another port:**
+
+    ```sh
+    python figure_extractor.py path/to/pdf/file --url http://localhost:5001/extract --output-dir ./output
+    python figure_extractor.py /path/to/pdf/folder --url http://localhost:5001/extract_batch --output-dir ./output
+    ```sh
+
 
 
 
