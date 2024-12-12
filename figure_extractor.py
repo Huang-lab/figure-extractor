@@ -304,10 +304,10 @@ def extract_figures(input_path, output_dir, url=None):
         return None
 
 def main():
-    parser = argparse.ArgumentParser(description="Process PDF files and extract data.")
-    parser.add_argument('input_path', help="Path to the input file or directory")
-    parser.add_argument('--output_dir', nargs='?', default='output', help="Directory to save the output files (default: 'output')")
-    parser.add_argument('--url', help="URL for the extraction service")
+    parser = argparse.ArgumentParser(description="Process PDF files and extract figures, tables and images.")
+    parser.add_argument('input_path', help="Path to the input PDF file or directory containing PDF files.")
+    parser.add_argument('--output_dir', nargs='?', default='output', help="Directory to save extracted figures. Defaults to './output' if not specified.")
+    parser.add_argument('--url', help="URL for the extraction service. For file extraction: 'http://localhost:5001/extract', for batch extraction: 'http://localhost:5001/extract_batch'. Only needed if you change the port while running Docker.")
     
     args = parser.parse_args()
 

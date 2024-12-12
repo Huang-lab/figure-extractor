@@ -63,7 +63,7 @@ Quickly compile comprehensive visual libraries from academic publications, allow
 
     For detailed API documentation, visit [API Docs](https://app.swaggerhub.com/apis-docs/WZEHRAKORKUSUZ/figure-extractor_api/1.0.0) 
 
-## Usage: `howto.ipynb`
+## Usage: [`how-to.ipynb`](how-to.ipynb)
 
 ### Extract Figures and Tables from a PDF
 
@@ -75,9 +75,8 @@ Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page docum
 
 #### Using the Module in Python Code
 
-```markdown
-For an example code snippets, please refer to the `Figure_Extraction_Example.ipynb` notebook.
-```
+
+For example code snippets, please refer to the [`how-to.ipynb`](how-to.ipynb) notebook.
 
 #### Using the CLI
 
