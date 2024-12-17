@@ -23,20 +23,18 @@ def parse_stat_file(output_dir):
                     logging.debug(f"Metadata file exists: {metadata_path}")
                     metadata = read_output_file(metadata_path)
                     if isinstance(metadata, list):  
-                        # Extract render URLs for Figures
+                        # Extract file names for Figures
                         figure_urls = [
-                            fig.get('renderURL') 
+                            os.path.basename(fig.get('renderURL')) 
                             for fig in metadata 
                             if fig.get('figType') == 'Figure'
-                        ]
-                        
-                        # Extract render URLs for Tables
+                        ]                
+                        # Extract file names for Tables
                         table_urls = [
-                            fig.get('renderURL') 
+                            os.path.basename(fig.get('renderURL')) 
                             for fig in metadata 
                             if fig.get('figType') == 'Table'
                         ]
-
                         # Debug log extracted URLs
                         logging.debug(f"Figure URLs: {figure_urls}")
                         logging.debug(f"Table URLs: {table_urls}")

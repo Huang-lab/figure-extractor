@@ -35,6 +35,37 @@ class FileDownloader:
             logging.error(f"Failed to download {download_url}: {str(e)}")
             raise
 
+    @staticmethod
+    def download_extracted_data(response_data, output_dir, base_url="http://localhost:5001"):
+        """
+        Downloads metadata and figures from the extraction response data.
+
+        :param response_data: The JSON response data from the server.
+        :param output_dir: Directory to save the downloaded files.
+        :param base_url: Base URL for downloading files.
+        """
+        try:
+            metadata_filename = response_data['metadata_filename']
+            metadata_download_url = urljoin(base_url, f"download/{metadata_filename}")
+            metadata_output_path = os.path.join(output_dir, metadata_filename)
+            FileDownloader.download_file(metadata_download_url, metadata_output_path)
+
+            figures = response_data.get('figures', [])
+            for figure_filename in figures:
+                figure_download_url = urljoin(base_url, f"download/{figure_filename}")
+                figure_output_path = os.path.join(output_dir, figure_filename)
+                FileDownloader.download_file(figure_download_url, figure_output_path)
+
+            tables = response_data.get('tables', [])
+            for table_filename in tables:
+                table_download_url = urljoin(base_url, f"download/{table_filename}")
+                table_output_path = os.path.join(output_dir, table_filename)
+                FileDownloader.download_file(table_download_url, table_output_path)
+
+        except Exception as e:
+            logging.error(f"Error downloading extracted data: {str(e)}")
+            raise
+
 class PDFExtractor:
     @staticmethod
     def extract_pdf(file_path, output_dir, url="http://localhost:5001/extract", base_url="http://localhost:5001"):
@@ -60,39 +91,6 @@ class PDFExtractor:
             return response_data
         except requests.RequestException as e:
             logging.error(f"Error extracting PDF: {str(e)}")
-            raise
-
-    @staticmethod
-    def download_extracted_data(response_data, output_dir, base_url="http://localhost:5001"):
-        """
-        Downloads metadata and figures from the extraction response data.
-
-        :param response_data: The JSON response data from the server.
-        :param output_dir: Directory to save the downloaded files.
-        :param base_url: Base URL for downloading files.
-        """
-        try:
-            metadata_filename = response_data['metadata_filename']
-            metadata_download_url = urljoin(base_url, f"download/{metadata_filename}")
-            metadata_output_path = os.path.join(output_dir, metadata_filename)
-            FileDownloader.download_file(metadata_download_url, metadata_output_path)
-
-            figures = response_data.get('figures', [])
-            for figure_url in figures:
-                figure_filename = os.path.basename(figure_url)
-                figure_download_url = urljoin(base_url, f"download/{figure_filename}")
-                figure_output_path = os.path.join(output_dir, figure_filename)
-                FileDownloader.download_file(figure_download_url, figure_output_path)
-
-            tables = response_data.get('tables', [])
-            for table_url in tables:
-                table_filename = os.path.basename(table_url)
-                table_download_url = urljoin(base_url, f"download/{table_filename}")
-                table_output_path = os.path.join(output_dir, table_filename)
-                FileDownloader.download_file(table_download_url, table_output_path)
-
-        except Exception as e:
-            logging.error(f"Error downloading extracted data: {str(e)}")
             raise
 
 class DirectoryProcessor:
@@ -166,33 +164,16 @@ class BatchExtractor:
                     logging.info(f"Received response data: {json.dumps(response_data, indent=2)}")
                     logging.info(f"Downloading extracted data to {response_data}")
 
-
                     for doc in response_data:
                         logging.info(f"Downloading metadata for {doc['document']}")
-                        metadata_filename = doc['metadata_filename']
-                        metadata_download_url = urljoin(url, f"download/{metadata_filename}")
-                        metadata_output_path = os.path.join(output_dir, metadata_filename)
-                        FileDownloader.download_file(metadata_download_url, metadata_output_path)
+                        # download metadata, figures and tables for each document
+                        FileDownloader.download_extracted_data(doc, output_dir, base_url="http://localhost:5001")
 
+                        # update figures and tables paths with output directory
                         figures = doc.get('figures', [])
-                        logging.info(f"Downloading figures for {doc['document']}")
-                        for figure_url in figures:
-                            figure_filename = os.path.basename(figure_url)
-                            figure_download_url = urljoin(url, f"download/{figure_filename}")
-                            figure_output_path = os.path.join(output_dir, figure_filename)
-                            FileDownloader.download_file(figure_download_url, figure_output_path)
-
                         tables = doc.get('tables', [])
-                        logging.info(f"Downloading tables for {doc['document']}")
-                        for table_url in tables:
-                            table_filename = os.path.basename(table_url)
-                            table_download_url = urljoin(url, f"download/{table_filename}")
-                            table_output_path = os.path.join(output_dir, table_filename)
-                            FileDownloader.download_file(table_download_url, table_output_path)
-
-                        # Modify the paths
-                        doc["figures"] = [os.path.join(output_dir, os.path.basename(fig)) for fig in figures]
-                        doc["tables"] = [os.path.join(output_dir, os.path.basename(tab)) for tab in tables]
+                        doc["figures"] = [os.path.join(output_dir, fig) for fig in figures]
+                        doc["tables"] = [os.path.join(output_dir, tab) for tab in tables]
 
                     # Save the response data as a JSON file
                     json_output_path = os.path.join(output_dir, 'stat_file.json')
