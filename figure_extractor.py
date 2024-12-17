@@ -11,6 +11,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 DEFAULT_OUTPUT_DIR = os.path.join(os.getcwd(), 'output')
+
 class FileDownloader:
     @staticmethod
     def download_file(download_url, output_path, timeout=30):
@@ -175,13 +176,36 @@ class BatchExtractor:
                         doc["figures"] = [os.path.join(output_dir, fig) for fig in figures]
                         doc["tables"] = [os.path.join(output_dir, tab) for tab in tables]
 
-                    # Save the response data as a JSON file
-                    json_output_path = os.path.join(output_dir, 'stat_file.json')
-                    with open(json_output_path, 'w') as json_file:
-                        json.dump(response_data, json_file, indent=2)
-                    logging.info(f"Saved response data to {json_output_path}")
+                    # # Save the response data as a JSON file
+                    # json_output_path = os.path.join(output_dir, 'stat_file.json')
+                    # with open(json_output_path, 'w') as json_file:
+                    #     json.dump(response_data, json_file, indent=2)
+                    # logging.info(f"Saved response data to {json_output_path}")
 
-                    return response_data
+                    # return response_data
+
+                    # Extract figure-level information
+                        figures_with_metadata = []
+                        figure_metadata_path = os.path.join(output_dir, f"{doc["document"]}.json")
+                        with open(figure_metadata_path, 'r') as metadata_file:
+                            figure_metadata = json.load(metadata_file)
+
+                        for fig in figures:
+                            figure_info = get_figure_metadata(figure_metadata, fig)
+                            figures_with_metadata.append({
+                                'figure': fig,
+                                'metadata': figure_info
+                            })
+                        
+                        doc['figures_with_metadata'] = figures_with_metadata
+
+                # Save the response data as a JSON file
+                json_output_path = os.path.join(output_dir, 'stat_file.json')
+                with open(json_output_path, 'w') as json_file:
+                    json.dump(response_data, json_file, indent=2)
+                logging.info(f"Saved response data to {json_output_path}")                  
+
+                return response_data
 
         except Exception as e:
             logging.error(f"Error during batch extraction: {str(e)}")
@@ -191,7 +215,17 @@ class BatchExtractor:
             if os.path.exists(zip_file_path):
                 os.unlink(zip_file_path)
                 logging.debug(f"Deleted temporary ZIP file {zip_file_path}")
-
+                
+def get_figure_metadata(figure_metadata, fig):
+    render_url = next((item['renderURL'] for item in figure_metadata if 'renderURL' in item and item['renderURL'].endswith(f"/{fig}")), None)
+    if render_url:
+        logging.debug(f"Found renderURL for {fig}: {render_url}")
+        figure_info = next((item for item in figure_metadata if item['renderURL'] == render_url), {})
+        return figure_info
+    else:
+        logging.debug(f"No renderURL found for {fig}")
+        return {}
+    
 def extract_figures(input_path, output_dir, url=None):
     """
     Processes the given path either as a directory or a file and runs the appropriate extraction function.
