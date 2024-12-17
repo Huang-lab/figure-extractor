@@ -176,14 +176,6 @@ class BatchExtractor:
                         doc["figures"] = [os.path.join(output_dir, fig) for fig in figures]
                         doc["tables"] = [os.path.join(output_dir, tab) for tab in tables]
 
-                    # # Save the response data as a JSON file
-                    # json_output_path = os.path.join(output_dir, 'stat_file.json')
-                    # with open(json_output_path, 'w') as json_file:
-                    #     json.dump(response_data, json_file, indent=2)
-                    # logging.info(f"Saved response data to {json_output_path}")
-
-                    # return response_data
-
                     # Extract figure-level information
                         figures_with_metadata = []
                         figure_metadata_path = os.path.join(output_dir, f"{doc["document"]}.json")
