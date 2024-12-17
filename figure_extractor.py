@@ -10,6 +10,7 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+DEFAULT_OUTPUT_DIR = os.path.join(os.getcwd(), 'output')
 class FileDownloader:
     @staticmethod
     def download_file(download_url, output_path, timeout=30):
@@ -71,7 +72,7 @@ class PDFExtractor:
         :param base_url: Base URL for downloading files.
         """
         try:
-            metadata_filename = response_data['metadata_file']
+            metadata_filename = response_data['metadata_filename']
             metadata_download_url = urljoin(base_url, f"download/{metadata_filename}")
             metadata_output_path = os.path.join(output_dir, metadata_filename)
             FileDownloader.download_file(metadata_download_url, metadata_output_path)
@@ -93,75 +94,6 @@ class PDFExtractor:
         except Exception as e:
             logging.error(f"Error downloading extracted data: {str(e)}")
             raise
-
-    @staticmethod
-    def process_batch_results(response_data):
-        """
-        Processes batch extraction results.
-
-        :param response_data: The JSON response data from the server.
-        :return: Processed results.
-        """
-        total_pages = 0
-        total_time = 0
-
-        files_info = []
-        for doc in response_data:
-            filename = os.path.splitext(os.path.basename(doc['filename']))[0]
-            metadata_path = f"{filename}.json"
-
-            files_info.append({
-                'filename': filename,
-                'metadata_file': metadata_path,
-                'figures': doc['numFigures'],
-                'pages': doc['numPages'],
-                'time_ms': doc['timeInMillis']
-            })
-
-            total_pages += doc['numPages']
-            total_time += doc['timeInMillis']
-
-        avg_time_per_page = total_time / total_pages if total_pages > 0 else 0
-
-        logging.info(f"Processed {len(response_data)} documents")
-        return {
-            'num_documents': len(response_data),
-            'documents': files_info,
-            'processing_stats': {
-                'total_pages': total_pages,
-                'total_time_ms': total_time,
-                'avg_ms_per_page': round(avg_time_per_page, 2)
-            }
-        }
-    
-    @staticmethod
-
-    def process_command_result(result):
-        structured_output = []
-        for item in result:
-            try:
-                metadata_file = item['filename'] + '.json'
-                with open(metadata_file, 'r') as f:
-                    metadata = json.load(f)
-                file_metadata = {
-                    "filename": os.path.basename(item['filename']),
-                    "num_figures": item['numFigures'],
-                    "num_pages": item['numPages'],
-                    "time_in_millis": item['timeInMillis'],
-                    "metadata_file": item['filename'] + '.json',
-                    "figures": [fig['renderURL'] for fig in metadata if fig.get('figType') == 'Figure'],
-                    "tables": [fig['renderURL'] for fig in metadata if fig.get('figType') == 'Table']
-                }
-                structured_output.append(file_metadata)
-            except json.JSONDecodeError:
-                logging.error("Failed to decode metadata file as JSON")
-                return {"error": "Failed to decode metadata file as JSON"}, 500
-
-        response = {
-            "documents": structured_output,
-            "metadata_file": 'stat_file.json'
-        }
-        return response
 
 class DirectoryProcessor:
     @staticmethod
@@ -231,17 +163,19 @@ class BatchExtractor:
 
                 if not isinstance(response, dict) or "error" not in response:
                     response_data = response.json()
-
+                    logging.info(f"Received response data: {json.dumps(response_data, indent=2)}")
                     logging.info(f"Downloading extracted data to {response_data}")
+
+
                     for doc in response_data:
-                        logging.info(f"Downloading metadata for {doc['filename']}")
-                        metadata_filename = doc['metadata_file']
+                        logging.info(f"Downloading metadata for {doc['document']}")
+                        metadata_filename = doc['metadata_filename']
                         metadata_download_url = urljoin(url, f"download/{metadata_filename}")
                         metadata_output_path = os.path.join(output_dir, metadata_filename)
                         FileDownloader.download_file(metadata_download_url, metadata_output_path)
 
                         figures = doc.get('figures', [])
-                        logging.info(f"Downloading figures for {doc['filename']}")
+                        logging.info(f"Downloading figures for {doc['document']}")
                         for figure_url in figures:
                             figure_filename = os.path.basename(figure_url)
                             figure_download_url = urljoin(url, f"download/{figure_filename}")
@@ -249,7 +183,7 @@ class BatchExtractor:
                             FileDownloader.download_file(figure_download_url, figure_output_path)
 
                         tables = doc.get('tables', [])
-                        logging.info(f"Downloading tables for {doc['filename']}")
+                        logging.info(f"Downloading tables for {doc['document']}")
                         for table_url in tables:
                             table_filename = os.path.basename(table_url)
                             table_download_url = urljoin(url, f"download/{table_filename}")
@@ -267,8 +201,6 @@ class BatchExtractor:
                     logging.info(f"Saved response data to {json_output_path}")
 
                     return response_data
-            
-
 
         except Exception as e:
             logging.error(f"Error during batch extraction: {str(e)}")
@@ -312,10 +244,10 @@ def main():
     args = parser.parse_args()
 
     try:
-        if not os.path.exists(args.output_dir):
-            os.makedirs(args.output_dir)
-        response = extract_figures(args.input_path, args.output_dir, args.url)
-        print(response)
+        output_dir = args.output_dir if args.output_dir else DEFAULT_OUTPUT_DIR
+        output_dir = DirectoryProcessor.setup_output_directory(output_dir)
+        response = extract_figures(args.input_path, output_dir, args.url)
+        print(json.dumps(response, indent=2))
     except Exception as e:
         logging.error(f"Error during extraction: {str(e)}")
 
