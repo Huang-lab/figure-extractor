@@ -1,0 +1,3 @@
+*.ipynb linguist-language=Python
+*.py linguist-language=python
+*.pyi linguist-language=python
