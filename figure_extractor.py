@@ -178,7 +178,7 @@ class BatchExtractor:
 
                     # Extract figure-level information
                         figures_with_metadata = []
-                        figure_metadata_path = os.path.join(output_dir, f"{doc["document"]}.json")
+                        figure_metadata_path = os.path.join(output_dir, f"{doc['document']}.json")
                         with open(figure_metadata_path, 'r') as metadata_file:
                             figure_metadata = json.load(metadata_file)
 
