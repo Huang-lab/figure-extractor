@@ -69,7 +69,7 @@ class FileDownloader:
 
 class PDFExtractor:
     @staticmethod
-    def extract_pdf(file_path, output_dir, url="http://localhost:5001/extract", base_url="http://localhost:5001"):
+    def extract_pdf(file_path, output_dir, url="http://localhost:5001/extract"):
         """
         Extracts figures and tables from a PDF file by sending it to the server and downloads the extracted data.
 
@@ -82,13 +82,18 @@ class PDFExtractor:
         try:
             logging.debug(f"Uploading {file_path} to {url} for extraction")
             logging.info(f"Extracting figures and tables from {file_path}")
+            output_dir = DirectoryProcessor.setup_output_directory(output_dir)
             with open(file_path, 'rb') as file:
                 files = {'file': file}
                 response = requests.post(url, files=files)
             response.raise_for_status()
             logging.info(f"Extraction successful for {file_path}")
             response_data = response.json()
-            PDFExtractor.download_extracted_data(response_data, output_dir, base_url)
+            if 'figures' in response_data:
+                response_data['figures'] = [os.path.basename(f) for f in response_data['figures']]
+            if 'tables' in response_data:
+                response_data['tables'] = [os.path.basename(t) for t in response_data['tables']]
+            FileDownloader.download_extracted_data(response_data, output_dir)
             return response_data
         except requests.RequestException as e:
             logging.error(f"Error extracting PDF: {str(e)}")
