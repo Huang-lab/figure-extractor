@@ -5,7 +5,6 @@ import time
 import json
 from .utils import read_output_file
 
-
 def parse_stat_file(output_dir):
     stat_file_path = os.path.join(output_dir, 'stat_file.json')
     if os.path.exists(stat_file_path):

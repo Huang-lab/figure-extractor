@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 import logging
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 DEFAULT_OUTPUT_DIR = os.path.join(os.getcwd(), 'output')
 
@@ -89,10 +89,25 @@ class PDFExtractor:
             response.raise_for_status()
             logging.info(f"Extraction successful for {file_path}")
             response_data = response.json()
-            if 'figures' in response_data:
-                response_data['figures'] = [os.path.basename(f) for f in response_data['figures']]
-            if 'tables' in response_data:
-                response_data['tables'] = [os.path.basename(t) for t in response_data['tables']]
+            figures = response_data.get('figures', [])
+            tables = response_data.get('tables', [])
+            response_data["figures"] = [os.path.join(output_dir, fig) for fig in figures]
+            response_data["tables"] = [os.path.join(output_dir, tab) for tab in tables]
+
+            # Extract figure-level information
+            figures_with_metadata = []
+            figure_metadata_path = os.path.join(output_dir, f"{os.path.basename(file_path)}.json")
+            with open(figure_metadata_path, 'r') as metadata_file:
+                figure_metadata = json.load(metadata_file)
+
+            for fig in figures:
+                figure_info = get_figure_metadata(figure_metadata, fig)
+                figures_with_metadata.append({
+                    'figure': fig,
+                    'metadata': figure_info
+                })
+        
+            response_data['figures_with_metadata'] = figures_with_metadata
             FileDownloader.download_extracted_data(response_data, output_dir)
             return response_data
         except requests.RequestException as e:
