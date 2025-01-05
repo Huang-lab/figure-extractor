@@ -1,67 +1,83 @@
+# Service layer for running pdffigures2 and parsing output
 import subprocess
 import os
 import logging
 import time
 import json
+import time
 from .utils import read_output_file
 
+def parse_json_metadata(metadata_path, processing_time=None, filename=None):
+    """Parse JSON metadata file and return structured result for single or batch extraction."""
+    if not os.path.exists(metadata_path):
+        logging.error(f"Metadata file not found: {metadata_path}")
+        return {"error": "Metadata file not found"}
+
+    metadata = read_output_file(metadata_path)
+    if not isinstance(metadata, list):
+        logging.error(f"Unexpected metadata structure in {metadata_path}")
+        return {"error": "Invalid metadata structure"}
+
+    # Extract file names for Figures/Tables
+    figure_urls = [
+        os.path.basename(fig.get('renderURL'))
+        for fig in metadata
+        if fig.get('figType') == 'Figure'
+    ]
+    table_urls = [
+        os.path.basename(fig.get('renderURL'))
+        for fig in metadata
+        if fig.get('figType') == 'Table'
+    ]
+    doc_name = filename or os.path.splitext(os.path.basename(metadata_path))[0]
+    pages = len({fig.get('page', 0) for fig in metadata})
+
+    return {
+        "document": doc_name,
+        "n_figures": len(figure_urls),
+        "n_tables": len(table_urls),
+        "pages": pages,
+        "time_in_millis": processing_time or 0,
+        "metadata_filename": f"{doc_name}.json",
+        "figures": figure_urls,
+        "tables": table_urls
+    }
+
 def parse_stat_file(output_dir):
+    """Parse stat_file.json in batch mode, but reuse parse_json_metadata for each entry. - generated for folder processing"""
     stat_file_path = os.path.join(output_dir, 'stat_file.json')
-    if os.path.exists(stat_file_path):
-        with open(stat_file_path, 'r') as stat_file:
-            stats = json.load(stat_file)
-            logging.debug(f"Stats: {stats}")
-            result = []
-            for stat in stats:  # Iterate over the list of dictionaries
-                logging.debug(f"Stat: {stat}")
-                metadata_filename = os.path.splitext(os.path.basename(stat.get('filename', '')))[0] + '.json'
-                logging.debug(f"Metadata filename: {metadata_filename}")
-                metadata_path = os.path.join(output_dir, metadata_filename)
-                logging.debug(f"Metadata path: {metadata_path}")
-                if os.path.exists(metadata_path):
-                    logging.debug(f"Metadata file exists: {metadata_path}")
-                    metadata = read_output_file(metadata_path)
-                    if isinstance(metadata, list):  
-                        # Extract file names for Figures
-                        figure_urls = [
-                            os.path.basename(fig.get('renderURL')) 
-                            for fig in metadata 
-                            if fig.get('figType') == 'Figure'
-                        ]                
-                        # Extract file names for Tables
-                        table_urls = [
-                            os.path.basename(fig.get('renderURL')) 
-                            for fig in metadata 
-                            if fig.get('figType') == 'Table'
-                        ]
-                        # Debug log extracted URLs
-                        logging.debug(f"Figure URLs: {figure_urls}")
-                        logging.debug(f"Table URLs: {table_urls}")
-                    else:
-                        logging.error(f"Unexpected metadata structure: {type(metadata)}")
-                        figure_urls = []
-                        table_urls = []
+    if not os.path.exists(stat_file_path):
+        return []
 
+    with open(stat_file_path, 'r') as stat_file:
+        stats = json.load(stat_file)
 
-                num_figures = stat.get('numFigures', 0)
-                num_tables = stat.get('numPages', 0)  
-                logging.debug(f"Figures: {num_figures}, Tables: {num_tables}")  
-                logging.debug(f"Metadata: {metadata_filename}, Figures: {figure_urls}, Tables: {table_urls}")
-                logging.debug(f"Time in millis: {stat.get('timeInMillis', 0)}")
-                result.append({
-                    "document": os.path.splitext(os.path.basename(stat.get('filename', '')))[0],
-                    "n_figures": len(figure_urls),
-                    "n_tables": len(table_urls),
-                    "pages": stat.get('numPages', 0),
-                    "time_in_millis": stat.get('timeInMillis', 0),
-                    "metadata_filename": os.path.splitext(os.path.basename(stat.get('filename', '')))[0] + '.json',
-                    "figures": figure_urls,
-                    "tables": table_urls
-                })
-            return result
+    result = []
+    for stat in stats:
+        # Derive metadata filename
+        base_name = os.path.splitext(os.path.basename(stat.get('filename', '')))[0]
+        metadata_filename = f"{base_name}.json"
+        metadata_path = os.path.join(output_dir, metadata_filename)
+        time_in_millis = stat.get('timeInMillis', 0)
+
+        parsed = parse_json_metadata(metadata_path, time_in_millis, base_name)
+        # Merge any extra info from stat if needed
+        if isinstance(parsed, dict) and "error" not in parsed:
+            # Overwrite or append to parsed if desired
+            parsed["document"] = stat.get('document', parsed["document"])
+            result.append(parsed)
+        else:
+            result.append({"error": f"Failed to parse metadata for {base_name}"})
+
+    return result
 
 def run_pdffigures2(file_path, output_dir):
     java_opts = os.getenv('JAVA_OPTS', '-Xmx12g')
+    file_path = os.path.abspath(file_path)
+    abs_output = os.path.abspath(output_dir)
+    abs_output = abs_output if abs_output.endswith('/') else abs_output + '/'   
+    start_time = time.time()
+    logging.debug(f"Running pdffigures2 on {file_path}")
     base_command = [
         'java', java_opts, '-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider', '-jar', '/pdffigures2/pdffigures2.jar',
         file_path,
@@ -69,8 +85,23 @@ def run_pdffigures2(file_path, output_dir):
         "-d", output_dir,
         "--dpi", "300"
     ]
-    result = subprocess.run(base_command, capture_output=True, text=True)
-    return result
+    result = subprocess.run(base_command, capture_output=True, text=True, cwd="/pdffigures2")
+    if result.returncode != 0:
+        logging.error(f"Command failed with exit code {result.returncode}")
+        logging.error(f"STDOUT: {result.stdout}")
+        logging.error(f"STDERR: {result.stderr}")
+        return {"error": result.stderr}, 500
+
+    # Build result by parsing JSON metadata (similar to parse_stat_file logic)
+    end_time = time.time()
+    processing_time = int((end_time - start_time) * 1000)
+    logging.debug(f"Processing time: {processing_time} ms")
+    base_filename = os.path.splitext(os.path.basename(file_path))[0]
+    metadata_filename = f"{base_filename}.json"
+    metadata_path = os.path.join(output_dir, metadata_filename)
+    logging.debug(f"Metadata file: {metadata_path}")
+
+    return parse_json_metadata(metadata_path, processing_time, base_filename)
 
 def run_pdffigures2_batch(folder_path, output_dir):
     """
@@ -103,7 +134,7 @@ def run_pdffigures2_batch(folder_path, output_dir):
             base_command,
             capture_output=True,
             text=True,
-            cwd="/pdffigures2",  # Run from pdffigures2 directory
+            cwd="/pdffigures2",  
         )
         
         end_time = time.time()

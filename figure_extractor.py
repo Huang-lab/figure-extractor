@@ -46,23 +46,47 @@ class FileDownloader:
         :param base_url: Base URL for downloading files.
         """
         try:
+            logging.debug(f"download_extracted_data called with output_dir: {output_dir}")
+            
+            # Download Metadata
             metadata_filename = response_data['metadata_filename']
             metadata_download_url = urljoin(base_url, f"download/{metadata_filename}")
             metadata_output_path = os.path.join(output_dir, metadata_filename)
             FileDownloader.download_file(metadata_download_url, metadata_output_path)
 
+            # Download Figures
             figures = response_data.get('figures', [])
+            logging.debug(f"Downloading figures: {figures}")
             for figure_filename in figures:
-                figure_download_url = urljoin(base_url, f"download/{figure_filename}")
-                figure_output_path = os.path.join(output_dir, figure_filename)
+                logging.debug(f"Original figure filename: {figure_filename}")
+                
+                # Extract base filename to avoid absolute paths
+                sanitized_figure_filename = os.path.basename(figure_filename)
+                logging.debug(f"Sanitized figure filename: {sanitized_figure_filename}")
+                
+                figure_download_url = urljoin(base_url, f"download/{sanitized_figure_filename}")
+                figure_output_path = os.path.join(output_dir, sanitized_figure_filename)
+                logging.debug(f"Figure download URL: {figure_download_url}")
+                logging.debug(f"Figure output path: {figure_output_path}")
+                
                 FileDownloader.download_file(figure_download_url, figure_output_path)
 
+            # Download Tables
             tables = response_data.get('tables', [])
+            logging.debug(f"Downloading tables: {tables}")
             for table_filename in tables:
-                table_download_url = urljoin(base_url, f"download/{table_filename}")
-                table_output_path = os.path.join(output_dir, table_filename)
+                logging.debug(f"Original table filename: {table_filename}")
+                
+                # Extract base filename to avoid absolute paths
+                sanitized_table_filename = os.path.basename(table_filename)
+                logging.debug(f"Sanitized table filename: {sanitized_table_filename}")
+                
+                table_download_url = urljoin(base_url, f"download/{sanitized_table_filename}")
+                table_output_path = os.path.join(output_dir, sanitized_table_filename)
+                logging.debug(f"Table download URL: {table_download_url}")
+                logging.debug(f"Table output path: {table_output_path}")
+                
                 FileDownloader.download_file(table_download_url, table_output_path)
-
         except Exception as e:
             logging.error(f"Error downloading extracted data: {str(e)}")
             raise
@@ -89,30 +113,49 @@ class PDFExtractor:
             response.raise_for_status()
             logging.info(f"Extraction successful for {file_path}")
             response_data = response.json()
+            logging.debug(f"Received response data: {json.dumps(response_data, indent=2)}")
+
+            # normalize figures and tables paths with output directory
+
+            FileDownloader.download_extracted_data(response_data, output_dir)
             figures = response_data.get('figures', [])
             tables = response_data.get('tables', [])
             response_data["figures"] = [os.path.join(output_dir, fig) for fig in figures]
             response_data["tables"] = [os.path.join(output_dir, tab) for tab in tables]
 
+            logging.info(f"Downloading metadata for {file_path}")
             # Extract figure-level information
+            logging.info(f"Extracting figure metadata for {file_path}")
             figures_with_metadata = []
-            figure_metadata_path = os.path.join(output_dir, f"{os.path.basename(file_path)}.json")
-            with open(figure_metadata_path, 'r') as metadata_file:
-                figure_metadata = json.load(metadata_file)
-
+            figure_metadata_path = os.path.join(
+                output_dir, f"{os.path.splitext(os.path.basename(file_path))[0]}.json")
+            logging.debug(f"Figure metadata path: {figure_metadata_path}")
+            try:
+                logging.debug(f"Opening metadata file: {figure_metadata_path}")
+                with open(figure_metadata_path, 'r') as metadata_file:
+                    figure_metadata = json.load(metadata_file)
+                    logging.debug(f"Loaded metadata: {json.dumps(figure_metadata, indent=2)}")
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.error(
+                    f"Error opening or parsing metadata file {figure_metadata_path}: {str(e)}")
+                raise
+            logging.debug(f"Extracted figures: {figures}")
             for fig in figures:
                 figure_info = get_figure_metadata(figure_metadata, fig)
                 figures_with_metadata.append({
                     'figure': fig,
                     'metadata': figure_info
                 })
+            logging.debug(f"Figures with metadata: {json.dumps(figures_with_metadata, indent=2)}")
         
             response_data['figures_with_metadata'] = figures_with_metadata
-            FileDownloader.download_extracted_data(response_data, output_dir)
+            logging.info(f"Extraction complete for {response_data['figures_with_metadata']}")
             return response_data
+        
         except requests.RequestException as e:
             logging.error(f"Error extracting PDF: {str(e)}")
             raise
+
 
 class DirectoryProcessor:
     @staticmethod
@@ -143,6 +186,7 @@ class DirectoryProcessor:
         """
         try:
             output_dir = os.path.abspath(output_dir)
+            logging.debug(f"Setting up output directory: {output_dir}")
             os.makedirs(output_dir, exist_ok=True)
             if not os.access(output_dir, os.W_OK):
                 raise PermissionError(f"No write permission for directory: {output_dir}")
@@ -229,16 +273,18 @@ class BatchExtractor:
                 logging.debug(f"Deleted temporary ZIP file {zip_file_path}")
                 
 def get_figure_metadata(figure_metadata, fig):
-    render_url = next((item['renderURL'] for item in figure_metadata if 'renderURL' in item and item['renderURL'].endswith(f"/{fig}")), None)
+    fig_filename = os.path.basename(fig)
+    logging.debug(f"Searching for renderURL ending with: /{fig_filename}")
+    render_url = next((item['renderURL'] for item in figure_metadata if 'renderURL' in item and item['renderURL'].endswith(f"/{fig_filename}")), None)
     if render_url:
-        logging.debug(f"Found renderURL for {fig}: {render_url}")
+        logging.debug(f"Found renderURL for {fig_filename}: {render_url}")
         figure_info = next((item for item in figure_metadata if item['renderURL'] == render_url), {})
         return figure_info
     else:
-        logging.debug(f"No renderURL found for {fig}")
+        logging.debug(f"No renderURL found for {fig_filename}")
         return {}
     
-def extract_figures(input_path, output_dir, url=None):
+def extract_figures(input_path, output_dir, url=None): # TODO: Always return a list of dictionaries
     """
     Processes the given path either as a directory or a file and runs the appropriate extraction function.
 
@@ -250,13 +296,36 @@ def extract_figures(input_path, output_dir, url=None):
         if url is None:
             url = "http://localhost:5001/extract"
         response = PDFExtractor.extract_pdf(input_path, output_dir, url)
-        logging.info(f"Extraction response: {json.dumps(response, indent=2)}")
-        return response
+        logging.info(f"Extraction response/extract: {json.dumps(response, indent=2)}")
+
+        # Log the type and content of response
+        logging.debug(f"Type of response from extract_pdf: {type(response)}")
+        logging.debug(f"Content of response from extract_pdf: {response}")
+
+        # Check if response is a dictionary; if so, wrap it in a list
+        if isinstance(response, dict):
+            response_list = [response]
+            logging.debug("Wrapped single response dictionary in a list.")
+        elif isinstance(response, list):
+            response_list = response
+            logging.debug("Received a list of response dictionaries.")
+        else:
+            logging.error(f"Unexpected response type: {type(response)}")
+            raise TypeError("extract_pdf should return a dictionary or a list of dictionaries.")
+
+        # Further ensure each item in the list is a dictionary
+        for idx, item in enumerate(response_list):
+            if not isinstance(item, dict):
+                logging.error(f"Item at index {idx} is not a dictionary: {type(item)}")
+                raise TypeError("Each item in response_list should be a dictionary.")
+
+        logging.debug(f"Returning response_list: {response_list}")
+        return response_list
     elif os.path.isdir(input_path):
         if url is None:
             url = "http://localhost:5001/extract_batch"
         response = BatchExtractor.extract_batch(input_path, output_dir, url)
-        logging.info(f"Batch extraction response: {json.dumps(response, indent=2)}")
+        logging.info(f"Batch extraction response/batch: {json.dumps(response, indent=2)}")
         return response
     else:
         logging.error("Invalid input path. It should be either a file or a directory.")

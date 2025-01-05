@@ -1,10 +1,9 @@
 from flask import request, jsonify, send_from_directory
 from . import app
-from .utils import save_uploaded_file, read_output_file, save_and_extract_zip, process_command_result
+from .utils import save_uploaded_file, read_output_file, save_and_extract_zip
 from .service import run_pdffigures2, count_figures_and_tables, run_pdffigures2_batch
-import os, logging
-import tempfile, json
-import zipfile, shutil
+import os, logging, shutil
+import logging
 
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -24,14 +23,16 @@ def extract_figures():
         os.makedirs(output_dir, exist_ok=True)
 
         result = run_pdffigures2(file_path, output_dir)
-        if result.returncode != 0:
-            logging.error(f"Error executing command: {result.stderr}")
-            return jsonify({"error": result.stderr}), 500
+        if 'error' in result:
+            logging.error(f"Error executing command: {result['error']}")
+            return jsonify({"error": result['error']}), 500
 
         output_file = os.path.join(output_dir, f"{os.path.splitext(file.filename)[0]}.json")
         figures = read_output_file(output_file)
         if figures is None:
             return jsonify({"error": f"Output file not found: {output_file}"}), 500
+        
+        logging.debug(f"Returned by pdffigures2 in /extract {result}")
 
         num_tables, num_figures = count_figures_and_tables(figures)
         response = {
@@ -40,15 +41,10 @@ def extract_figures():
             "metadata_file": os.path.basename(output_file),
             "figures": [fig['renderURL'] for fig in figures if fig.get('figType') == 'Figure'],
             "tables": [fig['renderURL'] for fig in figures if fig.get('figType') == 'Table'],
-            "metadata_filename": os.path.basename(output_file)
+            "metadata_filename": os.path.basename(output_file),
+            "pages": 0
         }
         return jsonify(response), 200
-    
-
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/extract_batch', methods=['POST'])
 def extract_batch():
@@ -83,39 +79,7 @@ def extract_batch():
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
             return jsonify({"error": str(e)}), 500
-            # process batch result - 
-            # structured_output = []
-            # if result.returncode != 0:
-            #     logging.error(f"Error executing command: {result.stderr}")
-            #     try:
-            #         # Assuming result.stderr is a JSON string
-            #         error_items = json.loads(result.stderr)
-            #         for item in error_items:
-            #             logging.debug(os.path.basename(item['filename']))
-            #             metadata = read_output_file(os.path.basename(item['filename']) + '.json')
-            #             logging.debug(f"Metadata: {metadata}")
-            #             if metadata is None:
-            #                 logging.error(f"Metadata file not found: {item['filename'] + '.json'}")
-            #                 continue    
-
-            #             file_metadata = {
-            #                 "filename": os.path.basename(item['filename']),
-            #                 "num_figures": item['numFigures'],
-            #                 "num_pages": item['numPages'],
-            #                 "time_in_millis": item['timeInMillis'],
-            #                 "metadata_file": item['filename'] + '.json',
-            #                 "figures": [fig['renderURL'] for fig in metadata if fig.get('figType') == 'Figure'],
-            #                 "tables": [fig['renderURL'] for fig in metadata if fig.get('figType') == 'Table']
-            #             }
-            #             structured_output.append(file_metadata)
-            #     except json.JSONDecodeError:
-            #         logging.error("Failed to decode stderr as JSON")
-            #         return jsonify({"error": result.stderr}), 500
-
-            # response = {
-            #     "documents": structured_output,
-            #     "metadata_file": 'stat_file.json'
-            # }
+        
         finally:
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
