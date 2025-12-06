@@ -22,27 +22,26 @@ def extract_figures():
         output_dir = app.config['OUTPUT_FOLDER']
         os.makedirs(output_dir, exist_ok=True)
 
-        result = run_pdffigures2(file_path, output_dir)
-        if 'error' in result:
-            logging.error(f"Error executing command: {result['error']}")
-            return jsonify({"error": result['error']}), 500
+        try:
+            # run_pdffigures2 now raises on error and returns a summary dict
+            result = run_pdffigures2(file_path, output_dir)
+        except Exception as e:
+            logging.error(f"Error executing pdffigures2: {e}")
+            return jsonify({"error": str(e)}), 500
 
-        output_file = os.path.join(output_dir, f"{os.path.splitext(file.filename)[0]}.json")
-        figures = read_output_file(output_file)
-        if figures is None:
-            return jsonify({"error": f"Output file not found: {output_file}"}), 500
-        
         logging.debug(f"Returned by pdffigures2 in /extract {result}")
 
-        num_tables, num_figures = count_figures_and_tables(figures)
+        # Build response directly from the parsed metadata summary
         response = {
-            "num_tables": num_tables,
-            "num_figures": num_figures,
-            "metadata_file": os.path.basename(output_file),
-            "figures": [fig['renderURL'] for fig in figures if fig.get('figType') == 'Figure'],
-            "tables": [fig['renderURL'] for fig in figures if fig.get('figType') == 'Table'],
-            "metadata_filename": os.path.basename(output_file),
-            "pages": 0
+            "num_tables": result.get("n_tables", 0),
+            "num_figures": result.get("n_figures", 0),
+            "metadata_file": result.get("metadata_filename"),
+            "metadata_filename": result.get("metadata_filename"),
+            "figures": result.get("figures", []),  # basenames
+            "tables": result.get("tables", []),    # basenames
+            "pages": result.get("pages", 0),
+            "time_in_millis": result.get("time_in_millis", 0),
+            "document": result.get("document"),
         }
         return jsonify(response), 200
 
@@ -86,9 +85,7 @@ def extract_batch():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    """
-    Download the extracted file.
-    """
+    """Download the extracted file."""
     directory = app.config['OUTPUT_FOLDER']
     return send_from_directory(directory, filename)
 

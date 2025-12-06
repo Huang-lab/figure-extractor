@@ -7,8 +7,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Configure Flask app
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = '/app/uploads/'
-app.config['OUTPUT_FOLDER'] = '/app/outputs/'
+
+# Use environment variables for directories to keep them consistent with Docker
+UPLOAD_ROOT = os.getenv('UPLOAD_DIR', '/app/uploads/')
+OUTPUT_ROOT = os.getenv('OUTPUT_DIR', '/app/output/')
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_ROOT
+app.config['OUTPUT_FOLDER'] = OUTPUT_ROOT
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
