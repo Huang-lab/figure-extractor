@@ -5,8 +5,12 @@ from .service import run_pdffigures2, count_figures_and_tables, run_pdffigures2_
 import os, logging, shutil
 import logging
 
-MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
-ALLOWED_EXTENSIONS = {'pdf'}
+
+def allowed_file(filename: str) -> bool:
+    """Check if the uploaded file has an allowed extension."""
+    allowed = app.config['ALLOWED_EXTENSIONS']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed
+
 
 @app.route('/extract', methods=['POST'])
 def extract_figures():
@@ -16,6 +20,9 @@ def extract_figures():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file type. Only PDF files are allowed."}), 400
 
     if file:
         file_path = save_uploaded_file(file)
@@ -45,6 +52,7 @@ def extract_figures():
         }
         return jsonify(response), 200
 
+
 @app.route('/extract_batch', methods=['POST'])
 def extract_batch():
     logging.info("Starting route")
@@ -56,6 +64,11 @@ def extract_batch():
     if folder.filename == '':
         logging.error("No selected folder")
         return jsonify({"error": "No selected folder"}), 400
+
+    # Optional: enforce that the uploaded batch is a ZIP file
+    if not folder.filename.lower().endswith('.zip'):
+        logging.error("Invalid folder upload type (expected .zip)")
+        return jsonify({"error": "Invalid folder type. Please upload a .zip file containing PDFs."}), 400
 
     if folder:
         temp_dir = None
@@ -82,6 +95,7 @@ def extract_batch():
         finally:
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
+
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
