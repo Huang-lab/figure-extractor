@@ -5,6 +5,7 @@ import logging
 import time
 import json
 from .utils import read_output_file
+from figure_metadata import parse_json_metadata_from_dict
 
 # Centralized configuration for pdffigures2
 PDF_FIGURES2_JAR = os.getenv('PDFFIGURES2_JAR', '/pdffigures2/pdffigures2.jar')
@@ -51,7 +52,12 @@ def _build_pdffigures2_command(
 
 
 def parse_json_metadata(metadata_path, processing_time=None, filename=None):
-    """Parse JSON metadata file and return structured result for single or batch extraction."""
+    """Parse JSON metadata file and return structured result.
+
+    This function now delegates the core parsing to the shared
+    figure_metadata.parse_json_metadata_from_dict helper, but retains the
+    previous diagnostics and return structure.
+    """
     if not os.path.exists(metadata_path):
         logging.error(f"Metadata file not found: {metadata_path}")
         # Extra diagnostics: list JSON files in the same directory
@@ -71,30 +77,12 @@ def parse_json_metadata(metadata_path, processing_time=None, filename=None):
         logging.error(f"Unexpected metadata structure in {metadata_path}")
         return {"error": "Invalid metadata structure"}
 
-    # Extract file names for Figures/Tables
-    figure_urls = [
-        os.path.basename(fig.get('renderURL'))
-        for fig in metadata
-        if fig.get('figType') == 'Figure'
-    ]
-    table_urls = [
-        os.path.basename(fig.get('renderURL'))
-        for fig in metadata
-        if fig.get('figType') == 'Table'
-    ]
     doc_name = filename or os.path.splitext(os.path.basename(metadata_path))[0]
-    pages = len({fig.get('page', 0) for fig in metadata})
-
-    return {
-        "document": doc_name,
-        "n_figures": len(figure_urls),
-        "n_tables": len(table_urls),
-        "pages": pages,
-        "time_in_millis": processing_time or 0,
-        "metadata_filename": f"{doc_name}.json",
-        "figures": figure_urls,
-        "tables": table_urls
-    }
+    return parse_json_metadata_from_dict(
+        metadata,
+        processing_time=processing_time or 0,
+        filename=doc_name,
+    )
 
 
 def parse_stat_file(output_dir):

@@ -14,8 +14,8 @@ OUTPUT_ROOT = os.getenv('OUTPUT_DIR', '/app/output/')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_ROOT
 app.config['OUTPUT_FOLDER'] = OUTPUT_ROOT
-# Enforce a maximum upload size (16 MB by default, overridable via env)
-app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
+# Enforce a maximum upload size (64 MB by default, overridable via env)
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 64 * 1024 * 1024))
 # Allowed file extensions for single-file uploads (can be overridden via env)
 app.config['ALLOWED_EXTENSIONS'] = set(
     ext.strip().lower() for ext in os.getenv('ALLOWED_EXTENSIONS', 'pdf').split(',') if ext.strip()
