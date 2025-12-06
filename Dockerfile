@@ -1,5 +1,5 @@
-# Use a slim version of OpenJDK 11 as the base image
-FROM openjdk:11-jdk-slim
+# Use a slim version of OpenJDK 25 as the base image
+FROM eclipse-temurin:11-jdk-jammy
 
 # Install dependencies for pdffigures2, git, and Python-related tools
 RUN apt-get update && apt-get install -y \
