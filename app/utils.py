@@ -3,12 +3,22 @@ import os
 import json
 import tempfile, zipfile
 import logging
+from flask import current_app
+
 
 def save_uploaded_file(file):
+    """Save an uploaded file to the configured upload folder.
+
+    Uses Flask's UPLOAD_FOLDER config, falling back to /app/uploads/ if not set.
+    """
+    upload_root = getattr(current_app, 'config', {}).get('UPLOAD_FOLDER', '/app/uploads/')
+    os.makedirs(upload_root, exist_ok=True)
+
     filename = secure_filename(file.filename)
-    file_path = os.path.join('/app/uploads/', filename)
+    file_path = os.path.join(upload_root, filename)
     file.save(file_path)
     return file_path
+
 
 def read_output_file(output_file):
     if not os.path.exists(output_file):
