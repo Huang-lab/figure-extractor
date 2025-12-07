@@ -12,6 +12,7 @@ PDF_FIGURES2_JAR = os.getenv('PDFFIGURES2_JAR', '/pdffigures2/pdffigures2.jar')
 PDF_FIGURES2_CWD = os.getenv('PDF_FIGURES2_CWD', '/pdffigures2')
 DEFAULT_DPI = os.getenv('PDFFIGURES2_DPI', '300')
 JAVA_OPTS = os.getenv('JAVA_OPTS', '-Xmx12g')
+PDFFIGURES2_TIMEOUT = int(os.getenv('PDFFIGURES2_TIMEOUT_SECONDS', '300'))
 
 
 def _build_pdffigures2_command(
@@ -163,12 +164,22 @@ def run_pdffigures2(file_path, output_dir):
     logging.debug(f"pdffigures2 command: {' '.join(command)} (cwd={PDF_FIGURES2_CWD})")
 
     start_time = time.time()
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        cwd=PDF_FIGURES2_CWD,
-    )
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            cwd=PDF_FIGURES2_CWD,
+            timeout=PDFFIGURES2_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired as e:
+        logging.error(
+            f"pdffigures2 timed out after {PDFFIGURES2_TIMEOUT} seconds for file {file_path}: {e}"
+        )
+        raise RuntimeError(
+            f"pdffigures2 timed out after {PDFFIGURES2_TIMEOUT} seconds for file {os.path.basename(file_path)}"
+        ) from e
+
     end_time = time.time()
 
     if result.returncode != 0:
@@ -216,12 +227,22 @@ def run_pdffigures2_batch(folder_path, output_dir):
     try:
         logging.debug(f"Running pdffigures2 batch command: {' '.join(command)}")
         start_time = time.time()
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            cwd=PDF_FIGURES2_CWD,
-        )
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                cwd=PDF_FIGURES2_CWD,
+                timeout=PDFFIGURES2_TIMEOUT,
+            )
+        except subprocess.TimeoutExpired as e:
+            logging.error(
+                f"pdffigures2 batch timed out after {PDFFIGURES2_TIMEOUT} seconds for folder {folder_path}: {e}"
+            )
+            raise RuntimeError(
+                f"pdffigures2 batch timed out after {PDFFIGURES2_TIMEOUT} seconds for folder {folder_path}"
+            ) from e
+
         end_time = time.time()
 
         processing_time = end_time - start_time
