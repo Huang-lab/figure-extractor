@@ -3,7 +3,12 @@ import os
 import logging
 from flask_swagger_ui import get_swaggerui_blueprint
 
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging level from environment
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG').upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.DEBUG),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Configure Flask app
 app = Flask(__name__)
@@ -25,6 +30,19 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 from . import routes
+
+# Start background cleanup worker
+from .cleanup import start_cleanup_worker
+
+if os.getenv('ENABLE_CLEANUP', 'true').lower() == 'true':
+    cleanup_interval = int(os.getenv('CLEANUP_INTERVAL_SECONDS', '3600'))
+    try:
+        start_cleanup_worker(UPLOAD_ROOT, OUTPUT_ROOT, cleanup_interval)
+        logging.info(f"Cleanup worker enabled (interval: {cleanup_interval}s)")
+    except Exception as e:
+        logging.error(f"Failed to start cleanup worker: {e}")
+else:
+    logging.info("Cleanup worker disabled (ENABLE_CLEANUP=false)")
 
 # Documentation via Swagger UI
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI

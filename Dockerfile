@@ -45,9 +45,19 @@ ENV JAVA_OPTS="-Xmx2g"
 
 # Set environment variable for the output directory (allow overrides from Docker or ENV)
 ENV OUTPUT_DIR=/app/output
+ENV UPLOAD_DIR=/app/uploads
+
+# Logging and cleanup configuration
+ENV LOG_LEVEL=INFO
+ENV ENABLE_CLEANUP=true
+ENV CLEANUP_INTERVAL_SECONDS=3600
 
 # Expose port 5001 for the Flask app (where it will run)
 EXPOSE 5001
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5001/health || exit 1
 
 # Default number of gunicorn workers (single worker to serialize heavy jobs)
 ENV GUNICORN_WORKERS=1
