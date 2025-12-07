@@ -51,6 +51,31 @@ def _build_pdffigures2_command(
     return cmd
 
 
+def _normalize_document_summary(summary: dict) -> dict:
+    """Ensure a consistent schema for per-document summaries.
+
+    This keeps the service layer stable for both single and batch
+    operations, regardless of how the underlying metadata parser evolves.
+    """
+    if summary is None:
+        summary = {}
+
+    # Prefer canonical key names but fall back to older variants
+    n_figures = summary.get("n_figures", summary.get("num_figures", 0))
+    n_tables = summary.get("n_tables", summary.get("num_tables", 0))
+
+    return {
+        "document": summary.get("document"),
+        "pages": summary.get("pages", 0),
+        "n_figures": n_figures,
+        "n_tables": n_tables,
+        "metadata_filename": summary.get("metadata_filename"),
+        "figures": summary.get("figures", []),
+        "tables": summary.get("tables", []),
+        "time_in_millis": summary.get("time_in_millis", 0),
+    }
+
+
 def parse_json_metadata(metadata_path, processing_time=None, filename=None):
     """Parse JSON metadata file and return structured result.
 
@@ -74,15 +99,22 @@ def parse_json_metadata(metadata_path, processing_time=None, filename=None):
 
     metadata = read_output_file(metadata_path)
     if not isinstance(metadata, list):
-        logging.error(f"Unexpected metadata structure in {metadata_path}")
-        return {"error": "Invalid metadata structure"}
+        logging.error(f"Unexpected metadata format in {metadata_path}: expected list, got {type(metadata)}")
+        return {"error": "Invalid metadata format"}
 
-    doc_name = filename or os.path.splitext(os.path.basename(metadata_path))[0]
-    return parse_json_metadata_from_dict(
-        metadata,
-        processing_time=processing_time or 0,
-        filename=doc_name,
-    )
+    try:
+        parsed = parse_json_metadata_from_dict(metadata)
+    except Exception as e:
+        logging.error(f"Failed to parse metadata using shared helper: {e}")
+        return {"error": "Failed to parse metadata"}
+
+    # Attach additional fields for compatibility and richer summaries
+    parsed["time_in_millis"] = processing_time if processing_time is not None else parsed.get("time_in_millis", 0)
+    parsed["document"] = filename if filename is not None else parsed.get("document")
+    parsed["metadata_filename"] = os.path.basename(metadata_path)
+
+    # Normalize before returning so callers always see the same shape
+    return _normalize_document_summary(parsed)
 
 
 def parse_stat_file(output_dir):
@@ -106,10 +138,11 @@ def parse_stat_file(output_dir):
         # Merge any extra info from stat if needed
         if isinstance(parsed, dict) and "error" not in parsed:
             # Overwrite or append to parsed if desired
-            parsed["document"] = stat.get('document', parsed["document"])
-            result.append(parsed)
+            parsed["document"] = stat.get('document', parsed.get("document"))
+            # Ensure the schema is normalized even after merging
+            result.append(_normalize_document_summary(parsed))
         else:
-            result.append({"error": f"Failed to parse metadata for {base_name}"})
+            logging.error(f"Failed to parse metadata for {base_name}: {parsed}")
 
     return result
 
@@ -162,6 +195,7 @@ def run_pdffigures2(file_path, output_dir):
     except Exception as diag_err:
         logging.error(f"Failed to list files in output directory {abs_output}: {diag_err}")
 
+    # Delegate JSON parsing and summary creation, which also normalizes the schema
     return parse_json_metadata(metadata_path, processing_time_ms, base_filename)
 
 
@@ -207,8 +241,11 @@ def run_pdffigures2_batch(folder_path, output_dir):
 
         logging.debug(f"pdffigures2 batch output: {result.stdout}")
 
-        # Build per-document summaries from the stat file
-        return parse_stat_file(abs_output)
+        # Build per-document summaries from the stat file and normalize them
+        summaries = parse_stat_file(abs_output)
+        return [
+            _normalize_document_summary(summary) for summary in summaries if isinstance(summary, dict)
+        ]
 
     except Exception as e:
         logging.error(f"Failed to run pdffigures2 batch: {e}")
