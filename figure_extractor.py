@@ -88,9 +88,72 @@ class FileDownloader:
                 logging.debug(f"Table output path: {table_output_path}")
                 
                 FileDownloader.download_file(table_download_url, table_output_path)
+            
+            # Fix paths in the metadata JSON file to reflect local paths
+            FileDownloader.fix_metadata_paths(metadata_output_path, output_dir)
+            
         except Exception as e:
             logging.error(f"Error downloading extracted data: {str(e)}")
             raise
+
+    @staticmethod
+    def fix_metadata_paths(metadata_file_path, output_dir):
+        """
+        Fix paths in metadata JSON file to use local output directory paths.
+        
+        :param metadata_file_path: Path to the metadata JSON file
+        :param output_dir: Local output directory path
+        """
+        try:
+            logging.debug(f"Fixing paths in metadata file: {metadata_file_path}")
+            
+            # Read the metadata file
+            with open(metadata_file_path, 'r') as f:
+                metadata = json.load(f)
+            
+            # Fix paths in the metadata
+            if isinstance(metadata, list):
+                # Multiple figures/tables
+                for item in metadata:
+                    FileDownloader._fix_item_paths(item, output_dir)
+            elif isinstance(metadata, dict):
+                # Single item or document
+                FileDownloader._fix_item_paths(metadata, output_dir)
+            
+            # Write back the fixed metadata
+            with open(metadata_file_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            logging.debug(f"Successfully fixed paths in {metadata_file_path}")
+            
+        except Exception as e:
+            logging.warning(f"Could not fix paths in metadata file {metadata_file_path}: {str(e)}")
+            # Don't raise - this is not critical enough to fail the whole operation
+    
+    @staticmethod
+    def _fix_item_paths(item, output_dir):
+        """
+        Recursively fix paths in a metadata item.
+        
+        :param item: Dictionary or list to fix paths in
+        :param output_dir: Local output directory path
+        """
+        if isinstance(item, dict):
+            for key, value in item.items():
+                if key in ['renderURL', 'captionBoundary', 'imageText', 'renderDpi']:
+                    # Fix renderURL paths
+                    if key == 'renderURL' and isinstance(value, str):
+                        # Extract filename from path like "/app/output/file.png"
+                        filename = os.path.basename(value)
+                        # Create new path with local output directory
+                        item[key] = os.path.join(output_dir, filename)
+                elif isinstance(value, (dict, list)):
+                    # Recursively fix nested structures
+                    FileDownloader._fix_item_paths(value, output_dir)
+        elif isinstance(item, list):
+            for element in item:
+                if isinstance(element, (dict, list)):
+                    FileDownloader._fix_item_paths(element, output_dir)
 
 class PDFExtractor:
     @staticmethod
