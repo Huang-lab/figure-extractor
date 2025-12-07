@@ -2,8 +2,9 @@ from flask import request, jsonify, send_from_directory
 from . import app
 from .utils import save_uploaded_file, read_output_file, save_and_extract_zip
 from .service import run_pdffigures2, count_figures_and_tables, run_pdffigures2_batch
-import os, logging, shutil
 import logging
+import shutil
+from pathlib import Path
 
 
 def allowed_file(filename: str) -> bool:
@@ -14,6 +15,11 @@ def allowed_file(filename: str) -> bool:
 
 @app.route('/extract', methods=['POST'])
 def extract_figures():
+    """Extract figures and tables from a single PDF file.
+    
+    Returns:
+        JSON response with extraction results or error message
+    """
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -26,8 +32,8 @@ def extract_figures():
 
     if file:
         file_path = save_uploaded_file(file)
-        output_dir = app.config['OUTPUT_FOLDER']
-        os.makedirs(output_dir, exist_ok=True)
+        output_dir = Path(app.config['OUTPUT_FOLDER'])
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
             # run_pdffigures2 now raises on error and returns a summary dict
@@ -55,7 +61,12 @@ def extract_figures():
 
 @app.route('/extract_batch', methods=['POST'])
 def extract_batch():
-    logging.info("Starting route")
+    """Extract figures and tables from multiple PDF files in a ZIP archive.
+    
+    Returns:
+        JSON response with extraction results for all PDFs or error message
+    """
+    logging.info("Starting batch extraction route")
     if 'folder' not in request.files:
         logging.error("No folder part in request")
         return jsonify({"error": "No folder part"}), 400
@@ -77,13 +88,12 @@ def extract_batch():
             temp_dir = save_and_extract_zip(folder)
             logging.debug(f"Extracted zip to directory: {temp_dir}")
             
-            output_dir = app.config['OUTPUT_FOLDER']
-            os.makedirs(output_dir, exist_ok=True)
+            output_dir = Path(app.config['OUTPUT_FOLDER'])
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-            input_dir = temp_dir
-            logging.debug(f"Processing directory: {input_dir}")
+            logging.debug(f"Processing directory: {temp_dir}")
 
-            response = run_pdffigures2_batch(input_dir, output_dir)
+            response = run_pdffigures2_batch(temp_dir, output_dir)
             logging.debug(f"Command result: {response}")
 
             return jsonify(response), 200
@@ -93,14 +103,20 @@ def extract_batch():
             return jsonify({"error": str(e)}), 500
         
         finally:
-            if temp_dir and os.path.exists(temp_dir):
+            if temp_dir and temp_dir.exists():
                 shutil.rmtree(temp_dir)
 
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    """Download the extracted file."""
+    """Download the extracted file.
+    
+    Args:
+        filename: Name of the file to download
+        
+    Returns:
+        File download response
+    """
     directory = app.config['OUTPUT_FOLDER']
     return send_from_directory(directory, filename)
-
 
