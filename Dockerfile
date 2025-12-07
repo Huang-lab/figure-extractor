@@ -37,10 +37,11 @@ COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -r /app/requirements.txt && \
     pip3 install --no-cache-dir gunicorn
 
-# Set environment variables for Java
+# Set environment variables for Java (reduced heap to be container-friendly)
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
-ENV JAVA_OPTS="-Xmx12g"
+# Use a conservative default heap; can be overridden with -e JAVA_OPTS
+ENV JAVA_OPTS="-Xmx2g"
 
 # Set environment variable for the output directory (allow overrides from Docker or ENV)
 ENV OUTPUT_DIR=/app/output
@@ -48,9 +49,10 @@ ENV OUTPUT_DIR=/app/output
 # Expose port 5001 for the Flask app (where it will run)
 EXPOSE 5001
 
-# Default number of gunicorn workers (can be overridden at runtime)
-ENV GUNICORN_WORKERS=3
+# Default number of gunicorn workers (single worker to serialize heavy jobs)
+ENV GUNICORN_WORKERS=1
+ENV GUNICORN_TIMEOUT=600
 
 # Command to run the Flask server via gunicorn
 # "run:app" assumes run.py exposes a top-level Flask `app` object.
-CMD ["gunicorn", "-w", "3", "-b", "0.0.0.0:5001", "run:app"]
+CMD ["gunicorn", "-w", "1", "--timeout", "600", "-b", "0.0.0.0:5001", "run:app"]
