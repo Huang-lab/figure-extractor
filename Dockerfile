@@ -1,14 +1,15 @@
 # Use a slim version of OpenJDK 25 as the base image
 FROM eclipse-temurin:11-jdk-jammy
 
-# Install dependencies for pdffigures2, git, and Python-related tools
+# Install dependencies for pdffigures2, git, Python-related tools, and libmagic for file validation
 RUN apt-get update && apt-get install -y \
     libleptonica-dev \
     tesseract-ocr \
     curl \
     gnupg \
     git \
-    python3-pip && \
+    python3-pip \
+    libmagic1 && \
     # Add sbt repository and install sbt
     echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list && \
     curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99E82A75642AC823" | apt-key add && \

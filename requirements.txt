@@ -1,3 +1,5 @@
 Flask
 requests
 flask-swagger-ui
+Flask-Limiter
+python-magic

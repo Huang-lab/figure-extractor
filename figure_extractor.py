@@ -116,13 +116,21 @@ class PDFExtractor:
             response_data = response.json()
             logging.debug(f"Received response data: {json.dumps(response_data, indent=2)}")
 
+            # Handle new standardized response format
+            if isinstance(response_data, dict) and 'data' in response_data:
+                # New format: {"success": true, "data": {...}}
+                extraction_data = response_data.get('data', {})
+            else:
+                # Old format: direct object
+                extraction_data = response_data
+
             # normalize figures and tables paths with output directory
 
-            FileDownloader.download_extracted_data(response_data, output_dir)
-            figures = response_data.get('figures', [])
-            tables = response_data.get('tables', [])
-            response_data["figures"] = [os.path.join(output_dir, fig) for fig in figures]
-            response_data["tables"] = [os.path.join(output_dir, tab) for tab in tables]
+            FileDownloader.download_extracted_data(extraction_data, output_dir)
+            figures = extraction_data.get('figures', [])
+            tables = extraction_data.get('tables', [])
+            extraction_data["figures"] = [os.path.join(output_dir, fig) for fig in figures]
+            extraction_data["tables"] = [os.path.join(output_dir, tab) for tab in tables]
 
             logging.info(f"Downloading metadata for {file_path}")
             # Extract figure-level information
@@ -149,9 +157,9 @@ class PDFExtractor:
                 })
             logging.debug(f"Figures with metadata: {json.dumps(figures_with_metadata, indent=2)}")
         
-            response_data['figures_with_metadata'] = figures_with_metadata
-            logging.info(f"Extraction complete for {response_data['figures_with_metadata']}")
-            return response_data
+            extraction_data['figures_with_metadata'] = figures_with_metadata
+            logging.info(f"Extraction complete for {extraction_data['figures_with_metadata']}")
+            return extraction_data
         
         except requests.RequestException as e:
             logging.error(f"Error extracting PDF: {str(e)}")
@@ -228,7 +236,15 @@ class BatchExtractor:
                 logging.info(f"Received response data: {json.dumps(response_data, indent=2)}")
                 logging.info(f"Downloading extracted data to {output_dir}")
 
-                for doc in response_data:
+                # Handle new standardized response format
+                if isinstance(response_data, dict) and 'data' in response_data:
+                    # New format: {"success": true, "data": [...]}
+                    documents = response_data.get('data', [])
+                else:
+                    # Old format: direct array
+                    documents = response_data
+
+                for doc in documents:
                     logging.info(f"Downloading metadata for {doc['document']}")
                     # download metadata, figures and tables for each document
                     FileDownloader.download_extracted_data(doc, output_dir, base_url="http://localhost:5001")

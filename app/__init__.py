@@ -1,17 +1,57 @@
-from flask import Flask
+from flask import Flask, request, g
 import os
 import logging
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import uuid
 
 # Configure logging level from environment
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG').upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.DEBUG),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - [%(request_id)s] - %(name)s - %(levelname)s - %(message)s'
 )
+
+# Custom logging filter to add request_id to log records
+class RequestIdFilter(logging.Filter):
+    def filter(self, record):
+        # Safely get request_id, handling cases outside of request context
+        try:
+            record.request_id = g.get('request_id', 'NO-REQUEST-ID')
+        except (RuntimeError, AttributeError):
+            # Outside of application/request context (e.g., startup, background threads)
+            record.request_id = 'SYSTEM'
+        return True
+
+# Add filter to root logger
+logging.getLogger().addFilter(RequestIdFilter())
 
 # Configure Flask app
 app = Flask(__name__)
+
+# Initialize rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per hour", "50 per minute"],
+    storage_uri="memory://",
+    strategy="fixed-window"
+)
+
+# Request ID middleware - runs before each request
+@app.before_request
+def add_request_id():
+    """Add request ID to Flask's g object for logging."""
+    g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+
+# Response middleware - runs after each request
+@app.after_request
+def add_request_id_header(response):
+    """Add request ID to response headers."""
+    if hasattr(g, 'request_id'):
+        response.headers['X-Request-ID'] = g.request_id
+    return response
 
 # Use environment variables for directories to keep them consistent with Docker
 UPLOAD_ROOT = os.getenv('UPLOAD_DIR', '/app/uploads/')
