@@ -71,10 +71,15 @@ os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 from . import routes
 
-# Start background cleanup worker
-from .cleanup import start_cleanup_worker
+# Start background cleanup worker (optional feature)
+try:
+    from .cleanup import start_cleanup_worker
+    CLEANUP_AVAILABLE = True
+except ImportError:
+    CLEANUP_AVAILABLE = False
+    logging.warning("Cleanup module not available - automatic cleanup disabled")
 
-if os.getenv('ENABLE_CLEANUP', 'true').lower() == 'true':
+if CLEANUP_AVAILABLE and os.getenv('ENABLE_CLEANUP', 'true').lower() == 'true':
     cleanup_interval = int(os.getenv('CLEANUP_INTERVAL_SECONDS', '3600'))
     try:
         start_cleanup_worker(UPLOAD_ROOT, OUTPUT_ROOT, cleanup_interval)
@@ -82,7 +87,10 @@ if os.getenv('ENABLE_CLEANUP', 'true').lower() == 'true':
     except Exception as e:
         logging.error(f"Failed to start cleanup worker: {e}")
 else:
-    logging.info("Cleanup worker disabled (ENABLE_CLEANUP=false)")
+    if not CLEANUP_AVAILABLE:
+        logging.info("Cleanup worker not available (module not found)")
+    else:
+        logging.info("Cleanup worker disabled (ENABLE_CLEANUP=false)")
 
 # Documentation via Swagger UI
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI
