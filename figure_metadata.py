@@ -27,29 +27,34 @@ def parse_json_metadata_from_dict(
         logging.error("parse_json_metadata_from_dict expected a list of objects")
         return {"error": "Invalid metadata structure"}
 
-    figure_urls = [
-        os.path.basename(fig.get("renderURL", ""))
-        for fig in metadata
-        if fig.get("figType") == "Figure" and fig.get("renderURL")
-    ]
-    table_urls = [
-        os.path.basename(fig.get("renderURL", ""))
-        for fig in metadata
-        if fig.get("figType") == "Table" and fig.get("renderURL")
-    ]
+    figures = []
+    tables = []
+
+    for fig in metadata:
+        if not fig.get("renderURL"):
+            continue
+
+        # Create a copy with sanitized filename for the URL
+        item = fig.copy()
+        item["renderURL"] = os.path.basename(item["renderURL"])
+
+        if fig.get("figType") == "Figure":
+            figures.append(item)
+        elif fig.get("figType") == "Table":
+            tables.append(item)
 
     doc_name = filename or "document"
     pages = len({fig.get("page", 0) for fig in metadata})
 
     return {
         "document": doc_name,
-        "n_figures": len(figure_urls),
-        "n_tables": len(table_urls),
+        "n_figures": len(figures),
+        "n_tables": len(tables),
         "pages": pages,
         "time_in_millis": processing_time,
         "metadata_filename": f"{doc_name}.json",
-        "figures": figure_urls,
-        "tables": table_urls,
+        "figures": figures,
+        "tables": tables,
     }
 
 

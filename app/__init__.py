@@ -16,15 +16,18 @@ logging.basicConfig(
 # Custom logging filter to add request_id to log records
 class RequestIdFilter(logging.Filter):
     def filter(self, record):
-        # Safely get request_id, handling cases outside of request context
-        try:
-            record.request_id = g.get('request_id', 'NO-REQUEST-ID')
-        except (RuntimeError, AttributeError):
-            # Outside of application/request context (e.g., startup, background threads)
-            record.request_id = 'SYSTEM'
+        if not hasattr(record, 'request_id'):
+            # Safely get request_id, handling cases outside of request context
+            try:
+                record.request_id = g.get('request_id', 'NO-REQUEST-ID')
+            except (RuntimeError, AttributeError):
+                # Outside of application/request context (e.g., startup, background threads)
+                record.request_id = 'SYSTEM'
         return True
 
 # Add filter to root logger
+for handler in logging.root.handlers:
+    handler.addFilter(RequestIdFilter())
 logging.getLogger().addFilter(RequestIdFilter())
 
 # Configure Flask app
@@ -34,7 +37,7 @@ app = Flask(__name__)
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["200 per hour", "50 per minute"],
+    default_limits=["2000 per hour", "1000 per minute"],
     storage_uri="memory://",
     strategy="fixed-window"
 )

@@ -18,7 +18,7 @@ def allowed_file(filename: str) -> bool:
 
 
 @app.route('/extract', methods=['POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("100 per minute")
 def extract_figures():
     """Extract figures and tables from a single PDF file.
     
@@ -95,7 +95,7 @@ def extract_figures():
 
 
 @app.route('/extract_batch', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("100 per minute")
 def extract_batch():
     """Extract figures and tables from multiple PDF files in a ZIP archive.
     
@@ -169,7 +169,7 @@ def extract_batch():
 
 
 @app.route('/download/<filename>', methods=['GET'])
-@limiter.limit("30 per minute")
+@limiter.limit("1000 per minute")
 def download_file(filename):
     """Download the extracted file.
     
