@@ -3,3 +3,4 @@ requests
 flask-swagger-ui
 Flask-Limiter
 python-magic
+gunicorn

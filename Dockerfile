@@ -25,7 +25,11 @@ RUN git clone https://github.com/allenai/pdffigures2.git /pdffigures2
 WORKDIR /pdffigures2
 
 # Build pdffigures2 with sbt assembly
-RUN sbt assembly
+RUN sbt assembly && \
+    # Move the built jar to a predictable location
+    mv /pdffigures2/pdffigures2.jar /pdffigures2.jar || \
+    mv /pdffigures2/target/scala-2.12/pdffigures2-assembly-*.jar /pdffigures2.jar || \
+    mv /pdffigures2/target/scala-2.11/pdffigures2-assembly-*.jar /pdffigures2.jar
 
 # Create a directory for the Flask application code
 WORKDIR /app
@@ -34,19 +38,15 @@ WORKDIR /app
 COPY . /app/
 
 # Install Flask & other required Python packages
-COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -r /app/requirements.txt && \
     pip3 install --no-cache-dir gunicorn
 
-# Set environment variables for Java (reduced heap to be container-friendly)
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-# Use a conservative default heap; can be overridden with -e JAVA_OPTS
-ENV JAVA_OPTS="-Xmx2g"
-
-# Set environment variable for the output directory (allow overrides from Docker or ENV)
+# Set environment variables
+ENV PDFFIGURES2_JAR=/pdffigures2.jar
+ENV PDFFIGURES2_CWD=/pdffigures2
 ENV OUTPUT_DIR=/app/output
 ENV UPLOAD_DIR=/app/uploads
+ENV JAVA_OPTS="-Xmx2g"
 
 # Logging and cleanup configuration
 ENV LOG_LEVEL=INFO

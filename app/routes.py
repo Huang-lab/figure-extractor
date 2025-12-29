@@ -1,9 +1,9 @@
 from flask import request, jsonify, send_from_directory, g
 from . import app, limiter
 from .utils import (
-    save_uploaded_file, read_output_file, save_and_extract_zip,
+    save_uploaded_file, save_and_extract_zip,
     error_response, success_response, validate_pdf_file, 
-    sanitize_filename, ERROR_CODES
+    ERROR_CODES
 )
 from .service import run_pdffigures2, count_figures_and_tables, run_pdffigures2_batch
 import logging
@@ -251,7 +251,8 @@ def readiness():
     
     try:
         # Check if pdffigures2 JAR exists
-        jar_path = Path(os.getenv('PDFFIGURES2_JAR', '/pdffigures2/pdffigures2.jar'))
+        from core.config import PDF_FIGURES2_JAR
+        jar_path = Path(PDF_FIGURES2_JAR)
         checks["pdffigures2_jar"] = jar_path.exists()
         
         # Check output directory is writable

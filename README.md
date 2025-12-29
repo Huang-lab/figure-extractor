@@ -1,133 +1,99 @@
-# Figure Extractor API
+# Modern Figure Extractor
 
-Extract figures and tables from PDF documents using this Flask-based service. The Figure Extractor API provides a straightforward HTTP interface for PDFFigures 2.0, a robust figure extraction system developed by the Allen Institute for AI. 
+A high-performance, modernized wrapper for [PDFFigures 2.0](http://pdffigures2.allenai.org/), designed for seamless integration into modern AI workflows and RAG (Retrieval-Augmented Generation) pipelines.
 
-This API wrapper makes it ideal for integration into various applications and workflows, particularly for Retrieval-Augmented Generation (RAG) applications.
+This project takes the robust extraction capabilities of the Allen Institute for AI's PDFFigures 2.0 and wraps them in a sophisticated, modular Python architecture with production-ready features.
 
+## 🚀 Modernization Highlights
 
-### About PDFFigures 2.0
-This API service is built on top of PDFFigures 2.0, a Scala-based project by the Allen Institute for AI. PDFFigures 2.0 is specifically designed to extract figures, captions, tables, and section titles from scholarly documents in computer science domain. The original work is described in their academic paper: "PDFFigures 2.0: Mining Figures from Research Papers" (Clark and Divvala, 2016). You can read the paper [here](https://ai2-website.s3.amazonaws.com/publications/pdf2.0.pdf) and visit the [PDFFigures 2.0 website](http://pdffigures2.allenai.org/).
+While the core extraction engine remains the powerful PDFFigures 2.0, this project introduces significant modernizations:
 
+- **Modular Architecture**: Clean separation between core extraction logic, web service, and CLI tools.
+- **Dual-Mode Execution**: Run extractions locally (direct JVM call) or remotely via a high-performance Flask API.
+- **Automated Environment Setup**: A smart setup script that handles Java 11 detection, Scala/sbt building, and Python dependency management.
+- **Production-Ready API**: Includes rate limiting, request tracking (UUIDs), standardized error handling, and automated background cleanup.
+- **Interactive Documentation**: Built-in Swagger/OpenAPI documentation for easy API exploration.
+- **Standardized Metadata**: Enhanced JSON parsing that provides consistent, easy-to-consume figure and table metadata.
 
-```
-┌─────────────────┐      ┌──────────────────┐      ┌────────────────┐
-│   Your App      │ HTTP │ Figure Extractor │ JNI  │  PDFFigures    │
-│  (Any Language) │──────►      API         │──────►     2.0        │
-│                 │      │  Python(Flask)   │      │  (Scala/JVM)   │
-└─────────────────┘      └──────────────────┘      └────────────────┘
-```
-## Features
+## 🛠 Features
 
-- PDF figure and table extraction
-- Support for local and remote PDF files
-- Batch processing capabilities for directories
-- Statistics of the extracted tables and figures
-- Docker support for easy deployment
-- Visualization options for PDF parsing
+- **High-Accuracy Extraction**: Captures figures, tables, captions, and their precise coordinates.
+- **Batch Processing**: Efficiently process entire directories of PDFs in one command.
+- **Flexible Deployment**: Run as a lightweight CLI tool, a local web server, or a containerized Docker service.
+- **Automated Cleanup**: Background worker ensures temporary files and old results don't exhaust disk space.
+- **Security Focused**: Input validation, secure filename handling, and directory traversal protection.
 
-## Use Cases
+## 📋 Setup
 
-1. *Machine Learning Dataset Creation*
-Extract visual data from clinical trial reports and research papers to build training datasets for medical image analysis and AI models, enabling researchers to efficiently aggregate figures for training machine learning algorithms in healthcare diagnostics.
+### Option 1: Local Setup (Recommended for Development)
 
-2. *Clinical Research Data Mining*
-Automatically extract and catalog figures from medical research articles, capturing key visualizations like treatment effect graphs, patient outcome charts, and experimental result diagrams to support systematic reviews and meta-analysis.
-
-3. *Academic Literature Review and Education*
-Quickly compile comprehensive visual libraries from academic publications, allowing researchers and educators to create teaching resources, compare research methodologies, and track visual trends across scientific disciplines.
-
-## Setup
-
-### Step 1: Build and Run the Docker Container
-
-1. Clone the repository:
-
+1.  **Prerequisites**: Ensure you have **Java 11** installed.
+2.  **Run Setup**:
     ```sh
-    git clone https://github.com/Huang-lab/figure-extractor.git
-    cd pdf-extraction
+    python3 setup_local.py
+    ```
+    *This script will automatically clone pdffigures2, build the JAR using sbt, and install all Python requirements.*
+
+3.  **Verify**:
+    ```sh
+    python3 figure_extractor.py path/to/sample.pdf --local
     ```
 
-2. Build the Docker image:
+### Option 2: Docker Setup (Recommended for Production)
 
+1.  **Build**:
     ```sh
-    docker build -t pdf-extraction .
+    docker build -t figure-extractor .
+    ```
+2.  **Run**:
+    ```sh
+    docker run -p 5001:5001 figure-extractor
     ```
 
-3. Run the Docker container:
+## 📖 Usage
 
-    ```sh
-    docker run -p 5001:5001 pdf-extraction
-    ```
+### CLI Tool
+The `figure_extractor.py` script is your primary interface.
 
-    ### API Documentation
-
-    For detailed API documentation, visit [API Docs](https://app.swaggerhub.com/apis-docs/WZEHRAKORKUSUZ/figure-extractor_api/1.0.0) 
-
-## Usage: [`how-to.ipynb`](how-to.ipynb)
-
-### Extract Figures and Tables from a PDF
-
-"""
-Processes a document and performs various operations on each page.
-
-Average processing time per page: ~1.06 - 1.55 seconds (based on a 29-page document with a total processing time of ~45 seconds)
-"""
-
-#### Using the Module in Python Code
-
-
-For example code snippets, please refer to the [`how-to.ipynb`](how-to.ipynb) notebook.
-
-#### Using the CLI
-
-**Default behavior**
-
+**Local Mode (Direct Extraction):**
 ```sh
-python figure_extractor.py 2404.18021v1.pdf
+python3 figure_extractor.py path/to/document.pdf --local --output-dir ./results
 ```
-This saves the extracted figures to `./output`
 
-**Specifying output directory:**
-
+**Remote Mode (Via API):**
 ```sh
-python figure_extractor.py path/to/pdf/file --output_dir ./figures
+python3 figure_extractor.py path/to/document.pdf --output-dir ./results
 ```
 
-This saves the extracted figures to `./figures`, creating the directory if it does not exist.
+### API Endpoints
+- `POST /extract`: Extract from a single PDF file.
+- `POST /extract_batch`: Extract from a ZIP archive of PDFs.
+- `GET /download/<filename>`: Retrieve extracted images or JSON metadata.
+- `GET /api/docs`: Interactive Swagger UI documentation.
 
-**Processing a folder:**
+## 🏗 Project Structure
 
-```sh
-python figure_extractor.py /path/to/pdf/folder --output-dir ./custom_output
-```
-**Specifying a custom URL if you run the docker service on another port:**
-
-```sh
-    python figure_extractor.py path/to/pdf/file --url http://localhost:5001/extract --output-dir ./output
-```
-
-```sh
-    python figure_extractor.py /path/to/pdf/folder --url http://localhost:5001/extract_batch --output-dir ./output
-```
-
-
-
-
-## App Structure
-```
-project/
-├── Dockerfile                # Defines the Docker image for the Flask web service
-├── Dockerignore    
-├── app/                      # Contains the Flask web service code
-│   ├── __init__.py           # Initializes the Flask app
-│   ├── routes.py             # Defines the API endpoints
-│   ├── service.py            # Contains the logic for running `pdffigures2`
-│   └── utils.py              # Utility functions for file handling
-├── figure_extractor.py       # CLI & Module for extracting figures and tables from a PDF file
-├── how-to.ipynb 
-└── README.md                 
+```text
+├── app/                # Flask Web Service
+│   ├── routes.py       # API Endpoints & Rate Limiting
+│   ├── service.py      # Service Layer
+│   ├── utils.py        # Standardized Responses & Validation
+│   └── cleanup.py      # Background Cleanup Worker
+├── core/               # Core Logic (Framework Agnostic)
+│   ├── config.py       # Centralized Configuration
+│   ├── extractor.py    # pdffigures2 Subprocess Wrapper
+│   └── metadata.py     # Metadata Parsing & Normalization
+├── figure_extractor.py # Unified CLI Tool
+├── setup_local.py      # Intelligent Setup Script
+├── run.py              # Local API Entry Point
+└── Dockerfile          # Production Container Config
 ```
 
-## License
+## 📜 Attribution & License
 
-This project is licensed under the Apache License 2.0.
+This project is built upon **PDFFigures 2.0**, developed by the Allen Institute for AI. 
+- **Paper**: [PDFFigures 2.0: Mining Figures from Research Papers](https://ai2-website.s3.amazonaws.com/publications/pdf2.0.pdf) (Clark and Divvala, 2016).
+- **Original Source**: [allenai/pdffigures2](https://github.com/allenai/pdffigures2)
+
+Licensed under the **Apache License 2.0**.
+
